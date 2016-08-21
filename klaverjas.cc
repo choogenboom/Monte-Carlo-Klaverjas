@@ -142,6 +142,10 @@ int kleurvankaart(int kaart) {
   return (kaart - (kaart % 10)) / 10;
 }
 
+bool istroef(int kaart) {
+  return kleurvankaart(kaart) == troefkleur;
+}
+
 int waardeerkaart(int kaart) {
   int kleur = kleurvankaart(kaart);
   
@@ -187,10 +191,6 @@ void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aa
   for (int i = 0; i < aantalkaarten; i++)
     cout <<  Kaarten(oost[i]) << " ";
   cout << endl;
-}
-
-bool istroef(int kaart) {
-  return kleurvankaart(kaart) == troefkleur;
 }
 
 int winnaar(int kaarten[aantalspelers], int beurt) {
@@ -354,11 +354,6 @@ int randommove(int kaarten[aantalkaarten], int handje, int beurt) {
 
   geefmogelijkheden(opgegooid[handje], maxkaart, beurt, kaarten, mogelijkekaarten, aantalmogelijkheden);
   
-  // cout << endl << "Mogelijke kaarten: " << aantalmogelijkheden << endl;
-  // for (int i = 0; i < aantalmogelijkheden; i++)
-  //   cout << Kaarten(mogelijkekaarten[i]);
-  // cout << endl;
-
   int randomkaart = rand() % aantalmogelijkheden;
   deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
 
@@ -402,7 +397,6 @@ int main(int argc, char* argv[]) {
   deelkaarten(zuid, west, noord, oost);
   printkaarten(zuid, west, noord, oost);
 
-  // Naar andere functie?
   for (int i = 0; i < aantalhandjes; i++)
     for (int j = 0; j < aantalspelers; j++)
       opgegooid[i][j] = -1;
@@ -422,7 +416,6 @@ int main(int argc, char* argv[]) {
       }
       
       opgegooid[handje][huidigespeler] = waarde;
-      // huidigespeler++;
       huidigespeler = (huidigespeler + 1) % aantalspelers;
     }
     cout << "Winnaar: " << winnaar(opgegooid[handje], beurt) << endl;
