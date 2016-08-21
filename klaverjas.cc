@@ -8,6 +8,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalhandjes = 8;
 const static int aantalkaarten = 8;
+const static bool rotterdams = true;
 int opgegooid[aantalhandjes][aantalspelers + 1];
 int troefkleur = 2;
 
@@ -171,6 +172,10 @@ int waardeerkaart(int kaart) {
   return 0;
 }
 
+int maat(int speler) {
+  return (speler + 2) % 4;
+}
+
 void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
   cout << "Zuid: ";
   for (int i = 0; i < aantalkaarten; i++)
@@ -312,30 +317,64 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int beurt, int mijnkaarten[aantalkaarten], int mogelijkekaarten[aantalkaarten], int & aantalmogelijkheden) {
+// int checkroem(int kaarten[aantalspelers]) {
+
+// }
+
+void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int beurt, 
+                       int mijnkaarten[aantalkaarten], int mogelijkekaarten[aantalkaarten], 
+                       int & aantalmogelijkheden) {
   aantalmogelijkheden = 0;
+  // Als wij kleur mogen bepalen is alles mogelijk
   if (opgegooidekaarten[beurt] != -1) {
     int kleur = kleurvankaart(opgegooidekaarten[beurt]);
 
     // Eerst kijken we of we kleur kunnen bekennen
-    for (int i = 0; i < maxkaart; i++) {
-      if (kleur == kleurvankaart(mijnkaarten[i])) {
-        mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
-        aantalmogelijkheden++;
-      }
-    }
-
-    if (aantalmogelijkheden == 0) {
-      // Zo niet kijken we of we in kunnen troeven
-      // TODO: Overtroeven
+    if (kleur != troefkleur) {
       for (int i = 0; i < maxkaart; i++) {
-        if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
+        if (kleur == kleurvankaart(mijnkaarten[i])) {
           mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
           aantalmogelijkheden++;
         }
       }
     }
+
+    // Als we geen kleur kunnen bekennen of er troef gevraagd is 
+    // proberen we over te troeven, als dat niet kan ondertroeven
+    if (aantalmogelijkheden == 0 && rotterdams) {
+      int hoogstopgegooid = 0;
+
+      // Check wat de hoogste opgegooide troef was
+      for (int i = 0; i < aantalspelers; i++) {
+        if (istroef(opgegooidekaarten[i])) {
+          if (waardeerkaart(opgegooidekaarten[i]) > waardeerkaart(opgegooidekaarten[hoogstopgegooid])) {
+            hoogstopgegooid = i;
+          }
+        }
+      }
+
+      // Overtroeven
+      for (int i = 0; i < maxkaart; i++) {
+        if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
+          if (waardeerkaart(mijnkaarten[i]) > waardeerkaart(hoogstopgegooid)) {
+            mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
+            aantalmogelijkheden++;
+          }
+        }
+      }
+
+      // Ondertroeven
+      if (aantalmogelijkheden == 0) {
+        for (int i = 0; i < maxkaart; i++) {
+          if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
+            mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
+            aantalmogelijkheden++;
+          }
+        }
+      }
+    }
   }
+
   // Als we ook niet in kunnen troeven zijn alle kaarten mogelijk
   // Hetzelfde geldt voor als wij de kleur mogen bepalen
   if (aantalmogelijkheden == 0 || (opgegooidekaarten[beurt == -1] && aantalmogelijkheden == 0)) {
@@ -353,6 +392,11 @@ int randommove(int kaarten[aantalkaarten], int handje, int beurt) {
   int maxkaart = aantalkaarten - handje;
 
   geefmogelijkheden(opgegooid[handje], maxkaart, beurt, kaarten, mogelijkekaarten, aantalmogelijkheden);
+
+  cout << aantalmogelijkheden << " mogelijkheden: ";
+  for (int i = 0; i < aantalmogelijkheden; i++)
+    cout << Kaarten(mogelijkekaarten[i]);
+  cout << endl;
   
   int randomkaart = rand() % aantalmogelijkheden;
   deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
