@@ -8,7 +8,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalhandjes = 8;
 const static int aantalkaarten = 8;
-const static bool rotterdams = true;
+const static bool rotterdams = false;
 int opgegooid[aantalhandjes][aantalspelers + 1];
 int troefkleur = 2;
 
@@ -176,6 +176,43 @@ int maat(int speler) {
   return (speler + 2) % 4;
 }
 
+// Partitionering voor QuickSort
+int partitie(int A[aantalspelers], int p, int r) {
+  int x = A[p];
+  int i = p - 1;
+  int j = r + 1;
+
+  while (i < j) {
+    j = j - 1;
+    
+    while (A[j] > x)
+      j = j - 1;
+
+    i = i + 1;
+
+    while (A[i] < x)
+      i = i + 1;
+
+    if (i < j) {
+      // Wissel A[i] en A[j]
+      int temp = A[i];
+      A[i] = A[j];
+      A[j] = temp;
+    }
+  }
+
+  return j;
+}
+
+// QuickSort algoritme voor Roemdetectie
+void quicksort(int A[aantalspelers], int p, int r) {
+  if (p < r) {
+    int q = partitie(A, p, r);
+    quicksort(A, p, q);
+    quicksort(A, q + 1, r);
+  }
+}
+
 void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
   cout << "Zuid: ";
   for (int i = 0; i < aantalkaarten; i++)
@@ -317,9 +354,13 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-// int checkroem(int kaarten[aantalspelers]) {
+int checkroem(int kaarten[aantalspelers]) {
+  int roem = 0;
 
-// }
+  quicksort(kaarten, 0, aantalspelers);
+
+  return roem;
+}
 
 /* Argumenten:
  * - opgegooidekaarten: Laatste kaarten die opgegooid zijn, waaraan kleur bekend moet worden
@@ -475,6 +516,7 @@ int main(int argc, char* argv[]) {
       huidigespeler = (huidigespeler + 1) % aantalspelers;
     }
     cout << "Winnaar: " << winnaar(opgegooid[handje], beurt) << endl;
+    cout << "Roem: " << checkroem(opgegooid[handje]) << endl;
     beurt = winnaar(opgegooid[handje], beurt);
     opgegooid[handje][aantalspelers] = beurt;
     printspel();
