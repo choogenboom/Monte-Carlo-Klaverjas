@@ -321,9 +321,18 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
 
 // }
 
+/* Argumenten:
+ * - opgegooidekaarten: Laatste kaarten die opgegooid zijn, waaraan kleur bekend moet worden
+ * - maxkaart: Hoeveel kaarten de speler nog in zijn handen heeft
+ * - beurt: De speler die uitgekomen is, wiens kleur we moeten bekennen
+ * - huidigespeler: De huidige speler (in dit geval dus computer). Alleen nodig voor Amsterdams
+ * - mijnkaarten: Kaarten die de speler in zijn handen heeft  
+ * - mogelijkekaarten: hierin worden de mogelijk opgegooide kaarten gereturnt
+ * - aantalmogelijkheden: hierin wordt het aantal mogelijke kaarten gereturnt
+ */
 void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int beurt, 
-                       int mijnkaarten[aantalkaarten], int mogelijkekaarten[aantalkaarten], 
-                       int & aantalmogelijkheden) {
+                       int huidigespeler, int mijnkaarten[aantalkaarten], 
+                       int mogelijkekaarten[aantalkaarten], int & aantalmogelijkheden) {
   aantalmogelijkheden = 0;
   // Als wij kleur mogen bepalen is alles mogelijk
   if (opgegooidekaarten[beurt] != -1) {
@@ -341,34 +350,36 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
 
     // Als we geen kleur kunnen bekennen of er troef gevraagd is 
     // proberen we over te troeven, als dat niet kan ondertroeven
-    if (aantalmogelijkheden == 0 && rotterdams) {
-      int hoogstopgegooid = 0;
-
+    if (aantalmogelijkheden == 0) {
+      int hoogstopgegooid = beurt;
       // Check wat de hoogste opgegooide troef was
       for (int i = 0; i < aantalspelers; i++) {
         if (istroef(opgegooidekaarten[i])) {
           if (waardeerkaart(opgegooidekaarten[i]) > waardeerkaart(opgegooidekaarten[hoogstopgegooid])) {
             hoogstopgegooid = i;
+            
           }
         }
       }
 
       // Overtroeven
-      for (int i = 0; i < maxkaart; i++) {
-        if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
-          if (waardeerkaart(mijnkaarten[i]) > waardeerkaart(hoogstopgegooid)) {
-            mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
-            aantalmogelijkheden++;
-          }
-        }
-      }
-
-      // Ondertroeven
-      if (aantalmogelijkheden == 0) {
+      if (rotterdams || hoogstopgegooid != maat(huidigespeler)) {
         for (int i = 0; i < maxkaart; i++) {
           if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
-            mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
-            aantalmogelijkheden++;
+            if (waardeerkaart(mijnkaarten[i]) > waardeerkaart(opgegooidekaarten[hoogstopgegooid])) {
+              mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
+              aantalmogelijkheden++;
+            }
+          }
+        }
+
+        // Ondertroeven
+        if (aantalmogelijkheden == 0) {
+          for (int i = 0; i < maxkaart; i++) {
+            if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
+              mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
+              aantalmogelijkheden++;
+            }
           }
         }
       }
@@ -376,7 +387,8 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
   }
 
   // Als we ook niet in kunnen troeven zijn alle kaarten mogelijk
-  // Hetzelfde geldt voor als wij de kleur mogen bepalen
+  // Hetzelfde geldt voor als wij de kleur mogen bepalen of 
+  // als we Amsterdams spelen en de slag aan de maat ligt
   if (aantalmogelijkheden == 0 || (opgegooidekaarten[beurt == -1] && aantalmogelijkheden == 0)) {
     for (int i = 0; i < maxkaart; i++) {
       mogelijkekaarten[i] = mijnkaarten[i];
@@ -386,12 +398,12 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
 }
 
 
-int randommove(int kaarten[aantalkaarten], int handje, int beurt) {
+int randommove(int kaarten[aantalkaarten], int handje, int beurt, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - handje;
 
-  geefmogelijkheden(opgegooid[handje], maxkaart, beurt, kaarten, mogelijkekaarten, aantalmogelijkheden);
+  geefmogelijkheden(opgegooid[handje], maxkaart, beurt, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
 
   cout << aantalmogelijkheden << " mogelijkheden: ";
   for (int i = 0; i < aantalmogelijkheden; i++)
@@ -455,7 +467,7 @@ int main(int argc, char* argv[]) {
         while (waarde == -1)
           waarde = usermove(spelerskaarten[huidigespeler], handje);
       else {
-        waarde = randommove(spelerskaarten[huidigespeler], handje, beurt);
+        waarde = randommove(spelerskaarten[huidigespeler], handje, beurt, huidigespeler);
         cout << "Computer heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
       }
       
@@ -466,7 +478,7 @@ int main(int argc, char* argv[]) {
     beurt = winnaar(opgegooid[handje], beurt);
     opgegooid[handje][aantalspelers] = beurt;
     printspel();
-    // printkaarten(zuid, west, noord, oost);
+    printkaarten(zuid, west, noord, oost);
     huidigespeler = beurt;
     handje++;
   }
