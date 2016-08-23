@@ -264,12 +264,10 @@ void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aa
 int winnaar(int kaarten[aantalspelers], int beurt) {
   int kleur = kleurvankaart(kaarten[beurt]);  // De te bekennen kleur
   int hoogste[3] = {-1, -1, 0};               // Hoogste aantal punten, speler en of ingetroefd is
-  // punten = 0;
 
   for (int i = 0; i < aantalspelers; i++) {
     if (kleurvankaart(kaarten[i]) == kleur) {
       int kaartpunten = waardeerkaart(kaarten[i]);
-      // punten += kaartpunten;
 
       // Als het aantal punten van de huidige kaart hoger is en de hoogste geen troef
       if (kaartpunten > hoogste[1] && !hoogste[2]) {
@@ -290,7 +288,6 @@ int winnaar(int kaarten[aantalspelers], int beurt) {
     // ingetroefd
     else if (istroef(kaarten[i])) {
       int kaartpunten = waardeerkaart(kaarten[i]);
-      // punten += kaartpunten;
 
       // Hoogste kaart tot nu toe ook troef?
       if (istroef(kaarten[hoogste[0]])) {
@@ -306,10 +303,6 @@ int winnaar(int kaarten[aantalspelers], int beurt) {
           hoogste[1] = kaartpunten;
           hoogste[2] = 1;
       }
-    }
-    // Geen kleur bekend, geen punten
-    else {
-      // 
     }
   }
 
@@ -411,22 +404,17 @@ int checkroem(int originelekaarten[aantalspelers]) {
 
   // 3/4-kaarts roem invoegen...
   for (int i = 0; i < 2; i++) {
-cout << "Check roem " << i << ": ";
     if (kaarten[i + 1] == kaarten[i] + 1 && kaarten[i + 2] == kaarten[i + 1] + 1) {
-cout << "3-kaarts roem!" << endl;
       roem = 20;
       if (i == 0 && kaarten[aantalspelers - 1] == kaarten[aantalspelers - 2] + 1) {
-cout << "4-kaarts roem!" << endl;
         roem = 50;
         break;
       }
     }
   }
 
-
   // Stuk:
   if (checkstuk(kaarten)) {
-    cout << "stuk!" << endl;
     roem += 20;
   }
 
@@ -593,7 +581,7 @@ int main(int argc, char* argv[]) {
     beurt = winnaar(opgegooid[handje], beurt);
     opgegooid[handje][aantalspelers] = beurt;
     printspel();
-    printkaarten(zuid, west, noord, oost);
+    // printkaarten(zuid, west, noord, oost);
     huidigespeler = beurt;
     handje++;
   }
