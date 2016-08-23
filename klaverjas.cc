@@ -8,15 +8,15 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalhandjes = 8;
 const static int aantalkaarten = 8;
-const static bool rotterdams = false;
+const static bool rotterdams = true;
 int opgegooid[aantalhandjes][aantalspelers + 1];
 int troefkleur = 2;
 
 enum Kaarten {
-  S7 = 0,  S8, S9, SB, SV, SH, S10, SA, 
-  H7 = 10, H8, H9, HB, HV, HH, H10, HA,
-  K7 = 20, K8, K9, KB, KV, KH, K10, KA,
-  R7 = 30, R8, R9, RB, RV, RH, R10, RA,
+  S7 = 0,  S8, SV, SH, S10, SA, S9, SB, 
+  H7 = 10, H8, HV, HH, H10, HA, H9, HB,
+  K7 = 20, K8, KV, KH, K10, KA, K9, KB,
+  R7 = 30, R8, RV, RH, R10, RA, R9, RB,
   X = -1
 };
 
@@ -24,103 +24,103 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
   string s;
   switch(kaart) {
     case (S7): 
-      s = "♠7";
+      s = "♠7 ";
       break;
     case (S8):
-      s = "♠8";
+      s = "♠8 ";
       break;
     case (S9):
-      s = "♠9";
+      s = "♠9 ";
       break;
     case (SB):
-      s = "♠B";
+      s = "♠B ";
       break;
     case (SV):
-      s = "♠V";
+      s = "♠V ";
       break;
     case (SH):
-      s = "♠H";
+      s = "♠H ";
       break;
     case (S10):
       s = "♠10";
       break;
     case (SA):
-      s = "♠A";
+      s = "♠A ";
       break;
     case (H7):
-      s = "\033[1;31m♥\033[0m7";
+      s = "\033[1;31m♥\033[0m7 ";
       break;
     case (H8):
-      s = "\033[1;31m♥\033[0m8";
+      s = "\033[1;31m♥\033[0m8 ";
       break;
     case (H9):
-      s = "\033[1;31m♥\033[0m9";
+      s = "\033[1;31m♥\033[0m9 ";
       break;
     case (HB):
-      s = "\033[1;31m♥\033[0mB";
+      s = "\033[1;31m♥\033[0mB ";
       break;
     case (HV):
-      s = "\033[1;31m♥\033[0mV";
+      s = "\033[1;31m♥\033[0mV ";
       break;
     case (HH):
-      s = "\033[1;31m♥\033[0mH";
+      s = "\033[1;31m♥\033[0mH ";
       break;
     case (H10):
       s = "\033[1;31m♥\033[0m10";
       break;
     case (HA):
-      s = "\033[1;31m♥\033[0mA";
+      s = "\033[1;31m♥\033[0mA ";
       break;
     case (K7):
-      s = "♣7";
+      s = "♣7 ";
       break;
     case (K8):
-      s = "♣8";
+      s = "♣8 ";
       break;
     case (K9):
-      s = "♣9";
+      s = "♣9 ";
       break;
     case (KB):
-      s = "♣B";
+      s = "♣B ";
       break;
     case (KV):
-      s = "♣V";
+      s = "♣V ";
       break;
     case (KH):
-      s = "♣H";
+      s = "♣H ";
       break;
     case (K10):
       s = "♣10";
       break;
     case (KA):
-      s = "♣A";
+      s = "♣A ";
       break;
     case (R7):
-      s = "\033[1;31m♦\033[0m7";
+      s = "\033[1;31m♦\033[0m7 ";
       break;
     case (R8):
-      s = "\033[1;31m♦\033[0m8";
+      s = "\033[1;31m♦\033[0m8 ";
       break;
     case (R9):
-      s = "\033[1;31m♦\033[0m9";
+      s = "\033[1;31m♦\033[0m9 ";
       break;
     case (RB):
-      s = "\033[1;31m♦\033[0mB";
+      s = "\033[1;31m♦\033[0mB ";
       break;
     case (RV):
-      s = "\033[1;31m♦\033[0mV";
+      s = "\033[1;31m♦\033[0mV ";
       break;
     case (RH):
-      s = "\033[1;31m♦\033[0mH";
+      s = "\033[1;31m♦\033[0mH ";
       break;
     case (R10):
       s = "\033[1;31m♦\033[0m10";
       break;
     case (RA):
-      s = "\033[1;31m♦\033[0mA";
+      s = "\033[1;31m♦\033[0mA ";
       break;
     case (X):
-      s = "\033[1;31mX\033[0m";
+      s = "\033[1;31mX\033[0m  ";
         break;
   }
 
@@ -147,29 +147,55 @@ bool istroef(int kaart) {
   return kleurvankaart(kaart) == troefkleur;
 }
 
+// Obv 7 8 V H 10 A 9 B
 int waardeerkaart(int kaart) {
   int kleur = kleurvankaart(kaart);
   
   kaart = kaart % 10;
   
-  if (kleur != troefkleur) {
-    if (kaart > 2 && kaart <= 5)
-      return kaart - 1;
-    else if (kaart > 5)
-      return kaart + 4;
+  if (kleur != troefkleur || kaart < 6) {
+    if (kaart < 2 || kaart == 6)
+      return 0;
+    else if (kaart <= 3)
+      return kaart + 1;
+    else if (kaart <= 5)
+      return kaart + 6;
+    else
+      return 2;
   }
   else {
-    if (kaart == 2) // Nel
+    if (kaart == 6) // Nel
       return 14;
-    else if (kaart == 3) // Boer
+    else if (kaart == 7) // Boer
       return 20;
-    else if (kaart > 3 && kaart <= 5)
-      return kaart - 1;
-    else if (kaart > 5)
-      return kaart + 4;
-    }
+  }
 
   return 0;
+}
+
+// Zet het nummer van een kaart om in 7 8 9 10 B V H A volgorde
+int roemvolgorde(int kaart) {
+  int kleur = kleurvankaart(kaart);
+  kaart = kaart % 10;
+
+  // 7 of 8
+  if (kaart < 2)
+    return 10 * kleur + kaart;
+  // V of H
+  else if (kaart < 4)
+    return 10 * kleur + kaart + 3;
+  // 10
+  else if (kaart == 4)
+    return 10 * kleur +  kaart - 1;
+  // A
+  else if (kaart == 5)
+    return 10 * kleur + kaart + 2;
+  // 9
+  else if (kaart == 6)
+    return 10 * kleur + kaart - 4;
+  // B
+  else
+    return 10 * kleur + kaart - 3;
 }
 
 int maat(int speler) {
@@ -214,22 +240,22 @@ void quicksort(int A[aantalspelers], int p, int r) {
 }
 
 void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
-  cout << "Zuid: ";
+  cout << "0: ";
   for (int i = 0; i < aantalkaarten; i++)
     cout << Kaarten(zuid[i]) << " ";
   cout << endl;
 
-  cout << "West: ";
+  cout << "1: ";
   for (int i = 0; i < aantalkaarten; i++)
     cout << Kaarten(west[i]) << " ";
   cout << endl;
 
-  cout << "Noord: ";
+  cout << "2: ";
   for (int i = 0; i < aantalkaarten; i++)
     cout << Kaarten(noord[i]) << " ";
   cout << endl;
 
-  cout << "Oost: ";
+  cout << "3: ";
   for (int i = 0; i < aantalkaarten; i++)
     cout <<  Kaarten(oost[i]) << " ";
   cout << endl;
@@ -354,10 +380,55 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-int checkroem(int kaarten[aantalspelers]) {
+// Preconditie: kaarten moet een gesorteerde array zijn
+bool checkstuk(int kaarten[aantalspelers]) {
+  int troefvrouw = 10 * troefkleur + 5;
+  int troefheer = troefvrouw + 1;
+
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    if (kaarten[i] == troefvrouw)
+      if (kaarten[i + 1] == troefheer)
+        return true;
+  }
+  
+  return false;
+}
+
+int checkroem(int originelekaarten[aantalspelers]) {
   int roem = 0;
+  int kaarten[aantalspelers];
+
+  for (int i = 0; i < aantalspelers; i++) {
+    kaarten[i] = roemvolgorde(originelekaarten[i]);
+    cout << Kaarten(originelekaarten[i]) << "=" << kaarten[i] << endl;
+  }
 
   quicksort(kaarten, 0, aantalspelers);
+
+  for (int i = 0; i < aantalspelers; i++)
+    cout << kaarten[i] << " ";
+  cout << endl;
+
+  // 3/4-kaarts roem invoegen...
+  for (int i = 0; i < 2; i++) {
+cout << "Check roem " << i << ": ";
+    if (kaarten[i + 1] == kaarten[i] + 1 && kaarten[i + 2] == kaarten[i + 1] + 1) {
+cout << "3-kaarts roem!" << endl;
+      roem = 20;
+      if (i == 0 && kaarten[aantalspelers - 1] == kaarten[aantalspelers - 2] + 1) {
+cout << "4-kaarts roem!" << endl;
+        roem = 50;
+        break;
+      }
+    }
+  }
+
+
+  // Stuk:
+  if (checkstuk(kaarten)) {
+    cout << "stuk!" << endl;
+    roem += 20;
+  }
 
   return roem;
 }
@@ -392,29 +463,31 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
     // Als we geen kleur kunnen bekennen of er troef gevraagd is 
     // proberen we over te troeven, als dat niet kan ondertroeven
     if (aantalmogelijkheden == 0) {
-      int hoogstopgegooid = beurt;
+      int hoogstopgegooid = -1;
+      int ligtaan = beurt;
+
       // Check wat de hoogste opgegooide troef was
       for (int i = 0; i < aantalspelers; i++) {
         if (istroef(opgegooidekaarten[i])) {
-          if (waardeerkaart(opgegooidekaarten[i]) > waardeerkaart(opgegooidekaarten[hoogstopgegooid])) {
-            hoogstopgegooid = i;
-            
+          if (opgegooidekaarten[i] > hoogstopgegooid) {
+            hoogstopgegooid = opgegooidekaarten[i];
+            ligtaan = i;
           }
         }
       }
 
-      // Overtroeven
-      if (rotterdams || hoogstopgegooid != maat(huidigespeler)) {
+      // Overtroeven, alleen hogere troeven dan hoogstopgegooid kunnen.
+      if (rotterdams || ligtaan != maat(huidigespeler)) {
         for (int i = 0; i < maxkaart; i++) {
           if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
-            if (waardeerkaart(mijnkaarten[i]) > waardeerkaart(opgegooidekaarten[hoogstopgegooid])) {
+            if (mijnkaarten[i] > hoogstopgegooid) {
               mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
               aantalmogelijkheden++;
             }
           }
         }
 
-        // Ondertroeven
+        // Ondertroeven, alle troeven zijn mogelijk
         if (aantalmogelijkheden == 0) {
           for (int i = 0; i < maxkaart; i++) {
             if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
