@@ -9,7 +9,8 @@ const static int aantalspelers = 4;
 const static int aantalhandjes = 8;
 const static int aantalkaarten = 8;
 const static bool rotterdams = true;
-int opgegooid[aantalhandjes][aantalspelers + 1];
+const static bool metroem = true;
+int opgegooid[aantalhandjes][aantalspelers + 2];
 int troefkleur = 2;
 
 enum Kaarten {
@@ -316,7 +317,7 @@ void printspel() {
     for (int j = 0; j < aantalspelers; j++) {
       cout << Kaarten(opgegooid[i][j]) << " ";
     }
-    cout << " " << opgegooid[i][aantalspelers] << endl;
+    cout << " speler " << opgegooid[i][aantalspelers] << " met " << opgegooid[i][aantalspelers + 1] << " punten." << endl;
   }
   cout << "---------------------------------------------" << endl;
 }
@@ -393,16 +394,10 @@ int checkroem(int originelekaarten[aantalspelers]) {
 
   for (int i = 0; i < aantalspelers; i++) {
     kaarten[i] = roemvolgorde(originelekaarten[i]);
-    cout << Kaarten(originelekaarten[i]) << "=" << kaarten[i] << endl;
   }
 
   quicksort(kaarten, 0, aantalspelers);
 
-  for (int i = 0; i < aantalspelers; i++)
-    cout << kaarten[i] << " ";
-  cout << endl;
-
-  // 3/4-kaarts roem invoegen...
   for (int i = 0; i < 2; i++) {
     if (kaarten[i + 1] == kaarten[i] + 1 && kaarten[i + 2] == kaarten[i + 1] + 1) {
       roem = 20;
@@ -419,6 +414,47 @@ int checkroem(int originelekaarten[aantalspelers]) {
   }
 
   return roem;
+}
+
+int waardeerkaarten(int kaarten[aantalspelers]) {
+  int punten = 0;
+  int roem = 0;
+
+  for (int i = 0; i < aantalspelers; i++) {
+    punten += waardeerkaart(kaarten[i]);
+  }
+
+  cout << punten << " punten";
+  if (metroem) {
+    roem = checkroem(kaarten);
+    cout << " en " << roem << " roem." << endl;
+  }
+  else
+    cout << "." << endl;
+
+  return punten + roem;
+}
+
+int totaalwinnaar(int kaarten[aantalhandjes][aantalspelers + 2], int &zuid, int &west, int &noord, int &oost) {
+  int nultwee = 0;
+  int eendrie = 0;
+
+  for (int i = 0; i < aantalkaarten; i++) {
+    if (kaarten[i][aantalspelers] == 0 || kaarten[i][aantalspelers] == 2)
+      nultwee += kaarten[i][aantalspelers + 1];
+    else
+      eendrie += kaarten[i][aantalspelers + 1];
+  }
+
+  zuid = nultwee;
+  west = eendrie;
+  noord = nultwee;
+  oost = eendrie;
+
+  if (nultwee > eendrie)
+    return 0;
+  else
+    return 1;
 }
 
 /* Argumenten:
@@ -577,14 +613,28 @@ int main(int argc, char* argv[]) {
       huidigespeler = (huidigespeler + 1) % aantalspelers;
     }
     cout << "Winnaar: " << winnaar(opgegooid[handje], beurt) << endl;
-    cout << "Roem: " << checkroem(opgegooid[handje]) << endl;
+
+    // cout << "Roem: " << checkroem(opgegooid[handje]) << endl;
     beurt = winnaar(opgegooid[handje], beurt);
     opgegooid[handje][aantalspelers] = beurt;
+    opgegooid[handje][aantalspelers + 1] = waardeerkaarten(opgegooid[handje]);
+    
+    if (handje == aantalhandjes - 1)
+      opgegooid[handje][aantalspelers + 1] = opgegooid[handje][aantalspelers + 1] + 10;
+
     printspel();
     // printkaarten(zuid, west, noord, oost);
     huidigespeler = beurt;
     handje++;
   }
+
+  // Printen wie uiteindelijk met hoeveel punten gewonnen heeft
+  int z = 0, w = 0, n = 0, o = 0;
+
+  if (totaalwinnaar(opgegooid, z, w, n, o) == 0)
+    cout << "0 en 2 hebben gewonnen met " << z << " punten!" << " 1 en 3 hadden er " << w << endl;
+  else
+    cout << "1 en 3 hebben gewonnen met " << w << " punten!" << " 0 en 2 hadden er " << z << endl;
 
   return 0;
 }
