@@ -384,22 +384,42 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-void deelrestkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
+void deelrestkaarten(int zuid[], int west[], int noord[], int oost[]) {
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
-  int *huidig;                                      // Pointer naar de huidige speler, wiens kaarten bekend zijn
+  int *huidig;                                   // Pointers naar de huidige speler, wiens kaarten bekend zijn
+  int *nul;                                      // En de rest van de spelers
+  int *een;
+  int *twee;
+
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
     allekaarten[i] = (10 * floor(i / aantalkaarten) + i % aantalkaarten);
 
-  if (zuid != NULL)
+  if (zuid != NULL) {
     huidig = zuid;
-  else if (west != NULL)
+    nul = west;
+    een = noord;
+    twee = oost;
+  }
+  else if (west != NULL) {
     huidig = west;
-  else if (noord != NULL)
+    nul = zuid;
+    een = noord;
+    twee = oost;
+  }
+  else if (noord != NULL) {
     huidig = noord;
-  else
+    nul = west;
+    een = zuid;
+    twee = oost;
+  }
+  else {
     huidig = oost;
+    nul = west;
+    een = noord;
+    twee = zuid;
+  }
 
 cout << "huidig: ";
 for (int i = 0; i < aantalkaarten; i++)
@@ -408,22 +428,54 @@ cout << endl;
 
   for (int i = 0; i < aantalkaarten; i++) {
     int index = (aantalkaarten * floor(huidig[i] / 10) + huidig[i] % 10);
-    cout << "maxkaart: " << maxkaart << endl;
     if (allekaarten[index] != huidig[i]) {
       index = zoekelement(huidig[i], allekaarten, maxkaart);
       cout << "index != huidig[i]. Gevonden: " << allekaarten[index] << "=" << huidig[i] << endl;
     }
 
     allekaarten[index] = -1;
-    wisselelement(index, allekaarten, maxkaart - i);
+    wisselelement(index, allekaarten, maxkaart - (i + 1));
   }
 
   maxkaart -= aantalkaarten;
-cout << "allekaarten (maxkaart=" << maxkaart << "): ";
-for (int i = 0; i < maxkaart; i++)
-  cout << Kaarten(allekaarten[i]);
-cout << endl;
+  
+  for (int j = 0; j < aantalkaarten; j++) {
+    int randomkaart = rand() % (maxkaart - 1) + 1;
+    nul[j] = allekaarten[randomkaart];
+    wisselelement(randomkaart, allekaarten, maxkaart - 1);
+    maxkaart--;
+  }
 
+  for (int j = 0; j < aantalkaarten; j++) {
+    int randomkaart = rand() % (maxkaart - 1) + 1;
+    een[j] = allekaarten[randomkaart];
+    wisselelement(randomkaart, allekaarten, maxkaart - 1);
+    maxkaart--;
+  }
+
+  for (int j = 0; j < aantalkaarten; j++)
+    twee[j] = allekaarten[j];
+
+  if (zuid != NULL) {
+    west = nul;
+    noord = een;
+    oost = twee;
+  }
+  else if (west != NULL) {
+    zuid = nul;
+    noord = een;
+    oost = twee;
+  }
+  else if (noord != NULL) {
+    west = nul;
+    zuid = een;
+    oost = twee;
+  }
+  else {
+    west = nul;
+    noord = een;
+    zuid = twee;
+  }
 }
 
 // Preconditie: kaarten moet een gesorteerde array zijn
@@ -588,6 +640,12 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
 }
 
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int handje, int beut, int huidigespeler) {
+  int west[aantalkaarten];
+  int noord[aantalkaarten];
+  int oost[aantalkaarten];
+  deelrestkaarten(kaarten, west, noord, oost);
+
+  printkaarten(kaarten, west, noord, oost);
 
 }
 
@@ -646,8 +704,6 @@ int main(int argc, char* argv[]) {
 
   deelkaarten(zuid, west, noord, oost);
   printkaarten(zuid, west, noord, oost);
-
-  deelrestkaarten(zuid, NULL, NULL, NULL);
 
   for (int i = 0; i < aantalhandjes; i++)
     for (int j = 0; j < aantalspelers + 2; j++)
