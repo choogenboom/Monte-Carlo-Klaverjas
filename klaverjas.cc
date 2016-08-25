@@ -374,103 +374,6 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-<<<<<<< HEAD
-void deelrestkaarten(int zuid[], int west[], int noord[], int oost[]) {
-  int allekaarten[aantalkaarten * aantalspelers];
-  int maxkaart = aantalkaarten * aantalspelers;
-  int *huidig;                                   // Pointers naar de huidige speler, wiens kaarten bekend zijn
-  int *nul;                                      // En de rest van de spelers
-  int *een;
-  int *twee;
-
-  // Initieer alle kaarten
-  for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
-    allekaarten[i] = (10 * floor(i / aantalkaarten) + i % aantalkaarten);
-
-  if (zuid != NULL) {
-    huidig = zuid;
-    nul = west;
-    een = noord;
-    twee = oost;
-  }
-  else if (west != NULL) {
-    huidig = west;
-    nul = zuid;
-    een = noord;
-    twee = oost;
-  }
-  else if (noord != NULL) {
-    huidig = noord;
-    nul = west;
-    een = zuid;
-    twee = oost;
-  }
-  else {
-    huidig = oost;
-    nul = west;
-    een = noord;
-    twee = zuid;
-  }
-
-cout << "huidig: ";
-for (int i = 0; i < aantalkaarten; i++)
-  cout << Kaarten(huidig[i]);
-cout << endl;
-
-  for (int i = 0; i < aantalkaarten; i++) {
-    int index = (aantalkaarten * floor(huidig[i] / 10) + huidig[i] % 10);
-    if (allekaarten[index] != huidig[i]) {
-      index = zoekelement(huidig[i], allekaarten, maxkaart);
-      cout << "index != huidig[i]. Gevonden: " << allekaarten[index] << "=" << huidig[i] << endl;
-    }
-
-    allekaarten[index] = -1;
-    wisselelement(index, allekaarten, maxkaart - (i + 1));
-  }
-
-  maxkaart -= aantalkaarten;
-  
-  for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
-    nul[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
-    maxkaart--;
-  }
-
-  for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
-    een[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
-    maxkaart--;
-  }
-
-  for (int j = 0; j < aantalkaarten; j++)
-    twee[j] = allekaarten[j];
-
-  if (zuid != NULL) {
-    west = nul;
-    noord = een;
-    oost = twee;
-  }
-  else if (west != NULL) {
-    zuid = nul;
-    noord = een;
-    oost = twee;
-  }
-  else if (noord != NULL) {
-    west = nul;
-    zuid = een;
-    oost = twee;
-  }
-  else {
-    west = nul;
-    noord = een;
-    zuid = twee;
-  }
-}
-
-=======
->>>>>>> parent of 6662d91... Begonnen aan pure MC speler
 // Preconditie: kaarten moet een gesorteerde array zijn
 bool checkstuk(int kaarten[aantalspelers]) {
   int troefvrouw = 10 * troefkleur + 5;
@@ -632,18 +535,6 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
   }
 }
 
-<<<<<<< HEAD
-int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int handje, int beut, int huidigespeler) {
-  int west[aantalkaarten];
-  int noord[aantalkaarten];
-  int oost[aantalkaarten];
-  deelrestkaarten(kaarten, west, noord, oost);
-
-  printkaarten(kaarten, west, noord, oost);
-
-}
-=======
->>>>>>> parent of 6662d91... Begonnen aan pure MC speler
 
 int randommove(int kaarten[aantalkaarten], int handje, int beurt, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
