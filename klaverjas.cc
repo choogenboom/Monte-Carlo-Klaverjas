@@ -10,7 +10,6 @@ const static int aantalhandjes = 8;
 const static int aantalkaarten = 8;
 const static bool rotterdams = true;
 const static bool metroem = true;
-int opgegooid[aantalhandjes][aantalspelers + 2];
 int troefkleur = 2;
 
 enum Kaarten {
@@ -310,7 +309,7 @@ int winnaar(int kaarten[aantalspelers], int beurt) {
   return hoogste[0];
 }
 
-void printspel() {
+void printspel(int opgegooid[aantalhandjes][aantalspelers + 2]) {
   cout << endl << "Opgegooide kaarten:" << endl;
 
   for (int i = 0; i < aantalhandjes; i++) {
@@ -323,12 +322,9 @@ void printspel() {
 }
 
 int zoekelement(int element, int input[], int arraysize) {
-  for (int i = 0; i < arraysize; i++) {
+  for (int i = 0; i < arraysize; i++)
     if (input[i] == element)
       return i;
-    else
-      cout << ".";
-  }
 
   return -1;
 }
@@ -385,7 +381,9 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-void deelrestkaarten(int zuid[], int west[], int noord[], int oost[]) {
+void deelrestkaarten(int opgegooid[aantalhandjes][aantalspelers + 2], int handje, int zuid[aantalspelers],
+                     int west[aantalspelers], int noord[aantalspelers], int oost[aantalspelers]) {
+
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int *huidig;                                   // Pointers naar de huidige speler, wiens kaarten bekend zijn
@@ -422,17 +420,29 @@ void deelrestkaarten(int zuid[], int west[], int noord[], int oost[]) {
     twee = zuid;
   }
 
-cout << "huidig: ";
-for (int i = 0; i < aantalkaarten; i++)
-  cout << Kaarten(huidig[i]);
-cout << endl;
+  // Delete kaarten die al opgegooid zijn uit allekaarten
+  //                  // +1 omdat we ook kaarten halverwege het handje meenemen
+  for (int i = 0; i < (handje + 1); i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      if (opgegooid[i][j] != -1) {
+        cout << "Delete kaart " << Kaarten(opgegooid[i][j]) << endl;
+        int index = (aantalkaarten * floor(opgegooid[i][j] / 10) + opgegooid[i][j] % 10);
 
-  for (int i = 0; i < aantalkaarten; i++) {
-    int index = (aantalkaarten * floor(huidig[i] / 10) + huidig[i] % 10);
-    if (allekaarten[index] != huidig[i]) {
-      index = zoekelement(huidig[i], allekaarten, maxkaart);
-      cout << "index != huidig[i]. Gevonden: " << allekaarten[index] << "=" << huidig[i] << endl;
+        if (allekaarten[index] != opgegooid[i][j])
+          index = zoekelement(opgegooid[i][j], allekaarten, maxkaart);
+
+        allekaarten[index] = -1;
+        wisselelement(index, allekaarten, maxkaart - (i + 1));
+      }
     }
+  }
+
+  // Delete eigen overige kaarten 
+  for (int i = 0; i < aantalkaarten - handje; i++) {
+    int index = (aantalkaarten * floor(huidig[i] / 10) + huidig[i] % 10);
+
+    if (allekaarten[index] != huidig[i])
+      index = zoekelement(huidig[i], allekaarten, maxkaart);
 
     allekaarten[index] = -1;
     wisselelement(index, allekaarten, maxkaart - (i + 1));
@@ -457,17 +467,17 @@ cout << endl;
   for (int j = 0; j < aantalkaarten; j++)
     twee[j] = allekaarten[j];
 
-  if (zuid != NULL) {
+  if (huidig == zuid) {
     west = nul;
     noord = een;
     oost = twee;
   }
-  else if (west != NULL) {
+  else if (huidig == west) {
     zuid = nul;
     noord = een;
     oost = twee;
   }
-  else if (noord != NULL) {
+  else if (huidig == noord) {
     west = nul;
     zuid = een;
     oost = twee;
@@ -640,21 +650,12 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
   }
 }
 
-int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int handje, int beut, int huidigespeler) {
-  int west[aantalkaarten];
-  int noord[aantalkaarten];
-  int oost[aantalkaarten];
-  deelrestkaarten(kaarten, west, noord, oost);
-
-  printkaarten(kaarten, west, noord, oost);
-
-}
-int randommove(int kaarten[aantalkaarten], int handje, int beurt, int huidigespeler) {
+int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int handje, int beurt, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - handje;
 
-  geefmogelijkheden(opgegooid[handje], maxkaart, beurt, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+  geefmogelijkheden(opgegooid, maxkaart, beurt, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
 
   cout << aantalmogelijkheden << " mogelijkheden: ";
   for (int i = 0; i < aantalmogelijkheden; i++)
@@ -665,6 +666,25 @@ int randommove(int kaarten[aantalkaarten], int handje, int beurt, int huidigespe
   deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
 
   return mogelijkekaarten[randomkaart];
+}
+
+int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalhandjes][aantalspelers + 2], 
+                   int handje, int beurt, int huidigespeler) {
+  int mogelijkekaarten[aantalkaarten];
+  int aantalmogelijkheden = 0;
+  int maxkaart = aantalkaarten - handje;
+
+  int west[aantalkaarten];
+  int noord[aantalkaarten];
+  int oost[aantalkaarten];
+
+  deelrestkaarten(opgegooid, handje, kaarten, west, noord, oost);
+cout << "MC Schatting kaarten:" << endl;
+  printkaarten(kaarten, west, noord, oost);
+
+  geefmogelijkheden(opgegooid[handje], maxkaart, beurt, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+
+  return randommove(kaarten, opgegooid[handje], handje, beurt, huidigespeler);
 }
 
 int usermove(int kaarten[aantalkaarten], int handje) {
@@ -719,7 +739,7 @@ int main(int argc, char* argv[]) {
         while (waarde == -1)
           waarde = usermove(spelerskaarten[huidigespeler], handje);
       else if (spelers[huidigespeler] == 1) {
-        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid[handje], handje, beurt, huidigespeler);
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, handje, beurt, huidigespeler);
         cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
       }
       else {
@@ -738,7 +758,7 @@ int main(int argc, char* argv[]) {
     
     if (handje == aantalhandjes - 1)
       opgegooid[handje][aantalspelers + 1] = opgegooid[handje][aantalspelers + 1] + 10;
-
+    printkaarten(zuid, west, noord, oost);
     printspel(opgegooid);
     huidigespeler = beurt;
     handje++;
