@@ -261,8 +261,8 @@ void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aa
   cout << endl;
 }
 
-int winnaar(int kaarten[aantalspelers], int beurt) {
-  int kleur = kleurvankaart(kaarten[beurt]);  // De te bekennen kleur
+int winnaar(int kaarten[aantalspelers], int komtuit) {
+  int kleur = kleurvankaart(kaarten[komtuit]);  // De te bekennen kleur
   int hoogste[3] = {-1, -1, 0};               // Hoogste aantal punten, speler en of ingetroefd is
 
   for (int i = 0; i < aantalspelers; i++) {
@@ -575,19 +575,19 @@ int totaalwinnaar(int kaarten[aantalhandjes][aantalspelers + 2], int &zuid, int 
 /* Argumenten:
  * - opgegooidekaarten: Laatste kaarten die opgegooid zijn, waaraan kleur bekend moet worden
  * - maxkaart: Hoeveel kaarten de speler nog in zijn handen heeft
- * - beurt: De speler die uitgekomen is, wiens kleur we moeten bekennen
+ * - komtuit: De speler die uitgekomen is, wiens kleur we moeten bekennen
  * - huidigespeler: De huidige speler (in dit geval dus computer). Alleen nodig voor Amsterdams
  * - mijnkaarten: Kaarten die de speler in zijn handen heeft  
  * - mogelijkekaarten: hierin worden de mogelijk opgegooide kaarten gereturnt
  * - aantalmogelijkheden: hierin wordt het aantal mogelijke kaarten gereturnt
  */
-void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int beurt, 
+void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int komtuit, 
                        int huidigespeler, int mijnkaarten[aantalkaarten], 
                        int mogelijkekaarten[aantalkaarten], int & aantalmogelijkheden) {
   aantalmogelijkheden = 0;
   // Als wij kleur mogen bepalen is alles mogelijk
-  if (opgegooidekaarten[beurt] != -1) {
-    int kleur = kleurvankaart(opgegooidekaarten[beurt]);
+  if (opgegooidekaarten[komtuit] != -1) {
+    int kleur = kleurvankaart(opgegooidekaarten[komtuit]);
 
     // Eerst kijken we of we kleur kunnen bekennen
     if (kleur != troefkleur) {
@@ -603,7 +603,7 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
     // proberen we over te troeven, als dat niet kan ondertroeven
     if (aantalmogelijkheden == 0) {
       int hoogstopgegooid = -1;
-      int ligtaan = beurt;
+      int ligtaan = komtuit;
 
       // Check wat de hoogste opgegooide troef was
       for (int i = 0; i < aantalspelers; i++) {
@@ -642,7 +642,7 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
   // Als we ook niet in kunnen troeven zijn alle kaarten mogelijk
   // Hetzelfde geldt voor als wij de kleur mogen bepalen of 
   // als we Amsterdams spelen en de slag aan de maat ligt
-  if (aantalmogelijkheden == 0 || (opgegooidekaarten[beurt == -1] && aantalmogelijkheden == 0)) {
+  if (aantalmogelijkheden == 0 || (opgegooidekaarten[komtuit == -1] && aantalmogelijkheden == 0)) {
     for (int i = 0; i < maxkaart; i++) {
       mogelijkekaarten[i] = mijnkaarten[i];
       aantalmogelijkheden++;
@@ -650,12 +650,12 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int b
   }
 }
 
-int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int handje, int beurt, int huidigespeler) {
+int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int handje, int komtuit, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - handje;
 
-  geefmogelijkheden(opgegooid, maxkaart, beurt, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+  geefmogelijkheden(opgegooid, maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
 
   cout << aantalmogelijkheden << " mogelijkheden: ";
   for (int i = 0; i < aantalmogelijkheden; i++)
@@ -669,7 +669,7 @@ int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int
 }
 
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalhandjes][aantalspelers + 2], 
-                   int handje, int beurt, int huidigespeler) {
+                   int handje, int komtuit, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - handje;
@@ -682,9 +682,9 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalhandjes][aant
 cout << "MC Schatting kaarten:" << endl;
   printkaarten(kaarten, west, noord, oost);
 
-  geefmogelijkheden(opgegooid[handje], maxkaart, beurt, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+  geefmogelijkheden(opgegooid[handje], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
 
-  return randommove(kaarten, opgegooid[handje], handje, beurt, huidigespeler);
+  return randommove(kaarten, opgegooid[handje], handje, komtuit, huidigespeler);
 }
 
 int usermove(int kaarten[aantalkaarten], int handje) {
@@ -713,7 +713,7 @@ int usermove(int kaarten[aantalkaarten], int handje) {
 }
 
 int main(int argc, char* argv[]) {
-  int huidigespeler = 0, handje = 0, beurt = 0;
+  int huidigespeler = 0, handje = 0, komtuit = 0;
   int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
   int spelers[aantalspelers];                            // Samenstelling van de spelers (mens/computer)
   int* spelerskaarten[4] = {zuid, west, noord, oost};    // Array met pointers naar de kaarten van spelers
@@ -733,34 +733,34 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < aantalspelers; i++) {
       int waarde = -1;
 
-      cout << "Speler " << huidigespeler << " aan de beurt, " << beurt << " komt uit. " << endl;
+      cout << "Speler " << huidigespeler << " aan de beurt, " << komtuit << " komt uit. " << endl;
 
       if (spelers[huidigespeler] == 0)
         while (waarde == -1)
           waarde = usermove(spelerskaarten[huidigespeler], handje);
       else if (spelers[huidigespeler] == 1) {
-        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, handje, beurt, huidigespeler);
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, handje, komtuit, huidigespeler);
         cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
       }
       else {
-        waarde = randommove(spelerskaarten[huidigespeler], opgegooid[handje], handje, beurt, huidigespeler);
+        waarde = randommove(spelerskaarten[huidigespeler], opgegooid[handje], handje, komtuit, huidigespeler);
         cout << "Random heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
       }
       
       opgegooid[handje][huidigespeler] = waarde;
       huidigespeler = (huidigespeler + 1) % aantalspelers;
     }
-    cout << "Winnaar: " << winnaar(opgegooid[handje], beurt) << endl;
+    cout << "Winnaar: " << winnaar(opgegooid[handje], komtuit) << endl;
 
-    beurt = winnaar(opgegooid[handje], beurt);
-    opgegooid[handje][aantalspelers] = beurt;
+    komtuit = winnaar(opgegooid[handje], komtuit);
+    opgegooid[handje][aantalspelers] = komtuit;
     opgegooid[handje][aantalspelers + 1] = waardeerkaarten(opgegooid[handje]);
     
     if (handje == aantalhandjes - 1)
       opgegooid[handje][aantalspelers + 1] = opgegooid[handje][aantalspelers + 1] + 10;
     printkaarten(zuid, west, noord, oost);
     printspel(opgegooid);
-    huidigespeler = beurt;
+    huidigespeler = komtuit;
     handje++;
   }
 
