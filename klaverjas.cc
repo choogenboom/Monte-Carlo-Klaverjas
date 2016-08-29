@@ -381,8 +381,8 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-void deelrestkaarten(int opgegooid[aantalhandjes][aantalspelers + 2], int handje, int zuid[aantalspelers],
-                     int west[aantalspelers], int noord[aantalspelers], int oost[aantalspelers]) {
+void deelrestkaarten(int opgegooid[aantalhandjes][aantalspelers + 2], int handje, int komtuit, 
+                     int zuid[aantalspelers], int west[aantalspelers], int noord[aantalspelers], int oost[aantalspelers]) {
 
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
@@ -390,40 +390,46 @@ void deelrestkaarten(int opgegooid[aantalhandjes][aantalspelers + 2], int handje
   int *nul;                                      // En de rest van de spelers
   int *een;
   int *twee;
+  int huidigespeler;
 
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
     allekaarten[i] = (10 * floor(i / aantalkaarten) + i % aantalkaarten);
 
+  // TODO: alles is != NULL
   if (zuid != NULL) {
     huidig = zuid;
     nul = west;
     een = noord;
     twee = oost;
+    huidigespeler = 0;
   }
   else if (west != NULL) {
     huidig = west;
     nul = zuid;
     een = noord;
     twee = oost;
+    huidigespeler = 1;
   }
   else if (noord != NULL) {
     huidig = noord;
     nul = west;
     een = zuid;
     twee = oost;
+    huidigespeler = 2;
   }
   else {
     huidig = oost;
     nul = west;
     een = noord;
     twee = zuid;
+    huidigespeler = 3;
   }
 
   // Delete kaarten die al opgegooid zijn uit allekaarten
   //                  // +1 omdat we ook kaarten halverwege het handje meenemen
   for (int i = 0; i < (handje + 1); i++) {
-    for (int j = 0; j < aantalspelers; j++) {
+    for (int j = 0; j != huidigespeler; j = (j + 1) % 4) {
       if (opgegooid[i][j] != -1) {
         cout << "Delete kaart " << Kaarten(opgegooid[i][j]) << endl;
         int index = (aantalkaarten * floor(opgegooid[i][j] / 10) + opgegooid[i][j] % 10);
@@ -678,7 +684,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalhandjes][aant
   int noord[aantalkaarten];
   int oost[aantalkaarten];
 
-  deelrestkaarten(opgegooid, handje, kaarten, west, noord, oost);
+  deelrestkaarten(opgegooid, handje, komtuit, kaarten, west, noord, oost);
 cout << "MC Schatting kaarten:" << endl;
   printkaarten(kaarten, west, noord, oost);
 
