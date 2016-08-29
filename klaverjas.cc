@@ -309,7 +309,7 @@ int winnaar(int kaarten[aantalspelers], int komtuit) {
   return hoogste[0];
 }
 
-void printspel(int opgegooid[aantalhandjes][aantalspelers + 2]) {
+void printspel(int opgegooid[aantalhandjes + 1][aantalspelers + 2]) {
   cout << endl << "Opgegooide kaarten:" << endl;
 
   for (int i = 0; i < aantalhandjes; i++) {
@@ -317,6 +317,11 @@ void printspel(int opgegooid[aantalhandjes][aantalspelers + 2]) {
       cout << Kaarten(opgegooid[i][j]) << " ";
     }
     cout << " speler " << opgegooid[i][aantalspelers] << " met " << opgegooid[i][aantalspelers + 1] << " punten." << endl;
+  }
+
+  if (opgegooid[aantalhandjes][0] != -1) {
+    for (int i = 0; i < aantalspelers; i++)
+      cout << "Speler " << i << ":" << opgegooid[aantalhandjes][i] << endl;
   }
   cout << "---------------------------------------------" << endl;
 }
@@ -381,7 +386,7 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-void deelrestkaarten(int opgegooid[aantalhandjes][aantalspelers + 2], int handje, int zuid[aantalspelers],
+void deelrestkaarten(int opgegooid[aantalhandjes + 1][aantalspelers + 2], int handje, int zuid[aantalspelers],
                      int west[aantalspelers], int noord[aantalspelers], int oost[aantalspelers]) {
 
   int allekaarten[aantalkaarten * aantalspelers];
@@ -550,7 +555,7 @@ int waardeerkaarten(int kaarten[aantalspelers]) {
   return punten + roem;
 }
 
-int totaalwinnaar(int kaarten[aantalhandjes][aantalspelers + 2], int &zuid, int &west, int &noord, int &oost) {
+int totaalwinnaar(int kaarten[aantalhandjes][aantalspelers + 2]) {
   int nultwee = 0;
   int eendrie = 0;
 
@@ -561,10 +566,10 @@ int totaalwinnaar(int kaarten[aantalhandjes][aantalspelers + 2], int &zuid, int 
       eendrie += kaarten[i][aantalspelers + 1];
   }
 
-  zuid = nultwee;
-  west = eendrie;
-  noord = nultwee;
-  oost = eendrie;
+  kaarten[aantalhandjes][0] = nultwee;
+  kaarten[aantalhandjes][1] = eendrie;
+  kaarten[aantalhandjes][2] = nultwee;
+  kaarten[aantalhandjes][3] = eendrie;
 
   if (nultwee > eendrie)
     return 0;
@@ -668,7 +673,7 @@ int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int
   return mogelijkekaarten[randomkaart];
 }
 
-int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalhandjes][aantalspelers + 2], 
+int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalhandjes + 1][aantalspelers + 2], 
                    int handje, int komtuit, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
@@ -712,20 +717,12 @@ int usermove(int kaarten[aantalkaarten], int handje) {
   }
 }
 
-int main(int argc, char* argv[]) {
+int speel(int spelers[aantalspelers], int opgegooid[aantalhandjes + 1][aantalspelers + 2], 
+          int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
   int huidigespeler = 0, handje = 0, komtuit = 0;
-  int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
-  int spelers[aantalspelers];                            // Samenstelling van de spelers (mens/computer)
   int* spelerskaarten[4] = {zuid, west, noord, oost};    // Array met pointers naar de kaarten van spelers
-  int opgegooid[aantalhandjes][aantalspelers + 2];
-
-  parseargv(argc, argv, spelers);
-  srand(time(NULL));
-
-  deelkaarten(zuid, west, noord, oost);
-  printkaarten(zuid, west, noord, oost);
-
-  for (int i = 0; i < aantalhandjes; i++)
+ 
+  for (int i = 0; i < aantalhandjes + 1; i++)
     for (int j = 0; j < aantalspelers + 2; j++)
       opgegooid[i][j] = -1;
 
@@ -764,13 +761,31 @@ int main(int argc, char* argv[]) {
     handje++;
   }
 
-  // Printen wie uiteindelijk met hoeveel punten gewonnen heeft
-  int z = 0, w = 0, n = 0, o = 0;
+    // Printen wie uiteindelijk met hoeveel punten gewonnen heeft
+  if (totaalwinnaar(opgegooid) == 0) {
+    cout << "0 en 2 hebben gewonnen met " << opgegooid[aantalhandjes][0] << " punten!" 
+         << " 1 en 3 hadden er " << opgegooid[aantalhandjes][1] << endl;
+    return 0;
+  }
+  else {
+    cout << "1 en 3 hebben gewonnen met " << opgegooid[aantalhandjes][0] << " punten!" 
+         << " 0 en 2 hadden er " << opgegooid[aantalhandjes][1] << endl;
+    return 1;
+  }
+}
 
-  if (totaalwinnaar(opgegooid, z, w, n, o) == 0)
-    cout << "0 en 2 hebben gewonnen met " << z << " punten!" << " 1 en 3 hadden er " << w << endl;
-  else
-    cout << "1 en 3 hebben gewonnen met " << w << " punten!" << " 0 en 2 hadden er " << z << endl;
+int main(int argc, char* argv[]) {
+  int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
+  int spelers[aantalspelers];                            // Samenstelling van de spelers (mens/computer)
+  int opgegooid[aantalhandjes + 1][aantalspelers + 2];
 
+  parseargv(argc, argv, spelers);
+  srand(time(NULL));
+
+  deelkaarten(zuid, west, noord, oost);
+  printkaarten(zuid, west, noord, oost);
+
+  speel(spelers, opgegooid, zuid, west, noord, oost);
+  printspel(opgegooid);
   return 0;
 }
