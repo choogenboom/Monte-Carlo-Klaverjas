@@ -395,6 +395,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int sla
 
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
+  int aantalgedelete = 0;
 
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
@@ -405,29 +406,33 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int sla
   for (int i = 0; i < (slag + 1); i++) {
     for (int j = 0; j < aantalspelers; j++) {
       int k = (komtuit + j) % 4;
-      cout << "Delete " << Kaarten(opgegooid[i][k]) << endl;
-      int index = (aantalkaarten * floor(opgegooid[i][k] / 10) + opgegooid[i][k] % 10);
+      if (opgegooid[i][k] != -1) {
+        int index = (aantalkaarten * floor(opgegooid[i][k] / 10) + opgegooid[i][k] % 10);
 
-      if (allekaarten[index] != opgegooid[i][k])
-        index = zoekelement(opgegooid[i][k], allekaarten, maxkaart);
+        if (allekaarten[index] != opgegooid[i][k])
+          index = zoekelement(opgegooid[i][k], allekaarten, maxkaart);
 
-      allekaarten[index] = -1;
-      wisselelement(index, allekaarten, maxkaart - (i + 1));
+        allekaarten[index] = -1;
+        aantalgedelete++;
+        wisselelement(index, allekaarten, maxkaart - (aantalgedelete));
+      }
     }
   }
 
+
   // Delete eigen overige kaarten 
   for (int i = 0; i < aantalkaarten - slag; i++) {
+    aantalgedelete++;
     int index = (aantalkaarten * floor(mijnkaarten[i] / 10) + mijnkaarten[i] % 10);
 
     if (allekaarten[index] != mijnkaarten[i])
-      index = zoekelement(mijnkaarten[i], allekaarten, maxkaart);
+      index = zoekelement(mijnkaarten[i], allekaarten, maxkaart - aantalgedelete);
 
     allekaarten[index] = -1;
-    wisselelement(index, allekaarten, maxkaart - (i + 1));
+    wisselelement(index, allekaarten, maxkaart - aantalgedelete);
   }
 
-  maxkaart -= aantalkaarten;
+  maxkaart -= aantalgedelete;
   
   for (int j = 0; j < aantalkaarten - slag; j++) {
     int randomkaart = rand() % (maxkaart - 1) + 1;
@@ -635,14 +640,22 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int west[aantalkaarten];
   int noord[aantalkaarten];
   int oost[aantalkaarten];
-  int spelers[aantalspelers] = {2, 2, 2, 2};
+
+
+  for (int i = 0; i < aantalkaarten; i++) {
+    west[i] = -1;
+    noord[i] = -1;
+    oost[i] = -1;
+  }
+
+  // int spelers[aantalspelers] = {2, 2, 2, 2};
 
 
   deelrestkaarten(opgegooid, slag, komtuit, huidigespeler, kaarten, west, noord, oost);
   cout << "MC Schatting kaarten:" << endl;
   printkaarten(kaarten, west, noord, oost);
   
-  speel(spelers, opgegooid, kaarten, west, noord, oost, 0, 0, 0, false);
+  // speel(spelers, opgegooid, kaarten, west, noord, oost, 0, 0, 0, false);
   cout << "Random punten: " << opgegooid[aantalslagen][huidigespeler] << endl;
   
   geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
