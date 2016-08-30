@@ -366,21 +366,21 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
   // geef deze aan een speler.
   int maxkaart = aantalkaarten * aantalspelers;
   for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
+    int randomkaart = rand() % (maxkaart - 1);
     zuid[j] = allekaarten[randomkaart];
     wisselelement(randomkaart, allekaarten, maxkaart - 1);
     maxkaart--;
   }
 
   for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
+    int randomkaart = rand() % (maxkaart - 1);
     west[j] = allekaarten[randomkaart];
     wisselelement(randomkaart, allekaarten, maxkaart - 1);
     maxkaart--;
   }
   
   for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
+    int randomkaart = rand() % (maxkaart - 1);
     noord[j] = allekaarten[randomkaart];
     wisselelement(randomkaart, allekaarten, maxkaart - 1);
     maxkaart--;
@@ -391,8 +391,7 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
 }
 
 void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int slag, int komtuit, int huidigespeler, 
-                     int mijnkaarten[aantalspelers], int west[aantalspelers], int noord[aantalspelers], int oost[aantalspelers]) {
-
+                     int spelerskaarten[aantalspelers][aantalkaarten]) {
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int aantalgedelete = 0;
@@ -407,6 +406,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int sla
     for (int j = 0; j < aantalspelers; j++) {
       int k = (komtuit + j) % 4;
       if (opgegooid[i][k] != -1) {
+cout << "Delete " << Kaarten(opgegooid[i][k]) << "...\n";
         int index = (aantalkaarten * floor(opgegooid[i][k] / 10) + opgegooid[i][k] % 10);
 
         if (allekaarten[index] != opgegooid[i][k])
@@ -422,34 +422,49 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int sla
 
   // Delete eigen overige kaarten 
   for (int i = 0; i < aantalkaarten - slag; i++) {
+cout << "Delete " << Kaarten(spelerskaarten[huidigespeler][i]) << "...\n";
     aantalgedelete++;
-    int index = (aantalkaarten * floor(mijnkaarten[i] / 10) + mijnkaarten[i] % 10);
+    int index = (aantalkaarten * floor(spelerskaarten[huidigespeler][i] / 10) + spelerskaarten[huidigespeler][i] % 10);
 
-    if (allekaarten[index] != mijnkaarten[i])
-      index = zoekelement(mijnkaarten[i], allekaarten, maxkaart - aantalgedelete);
+    if (allekaarten[index] != spelerskaarten[huidigespeler][i])
+      index = zoekelement(spelerskaarten[huidigespeler][i], allekaarten, maxkaart - aantalgedelete);
 
     allekaarten[index] = -1;
     wisselelement(index, allekaarten, maxkaart - aantalgedelete);
   }
 
   maxkaart -= aantalgedelete;
-  
-  for (int j = 0; j < aantalkaarten - slag; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
-    west[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
-    maxkaart--;
+
+  // Deel 2 spelers naast huidigespeler kaaren
+  for (int i = 1; i <= aantalspelers - 2; i++) {
+    for (int j = 0; j < aantalkaarten - slag - 1; j++) {
+      int randomkaart = rand() % (maxkaart - 1);
+      spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
+      allekaarten[randomkaart] = -1;
+      wisselelement(randomkaart, allekaarten, maxkaart - 1);
+      maxkaart--;
+    }
   }
 
-  for (int j = 0; j < aantalkaarten - slag; j++) {
-    int randomkaart = rand() % (maxkaart - 1) + 1;
-    noord[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
+  cout << "Deel speler " << (huidigespeler + 3) % 4 << " de laatste kaarten" << endl;
+  // Deel speler links van huidigespeler (+3 %4) de rest van de kaarten
+  for (int i = 0; i < aantalkaarten - slag - 1; i++) {
+    spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[maxkaart - 1];
+    allekaarten[maxkaart - 1] = -1;
     maxkaart--;
   }
+cout << "maxkaart: " << maxkaart << endl;
 
-  for (int j = 0; j < aantalkaarten - slag; j++)
-    oost[j] = allekaarten[j];
+  // Overige kaarten verdelen over spelers die nog niet opgegooid hebben
+  int i = 0;
+  while (maxkaart > 0) {
+    if (opgegooid[slag][i] == -1 && huidigespeler != i) {
+      spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[maxkaart - 1];
+      allekaarten[maxkaart - 1] = -1;
+      maxkaart--;
+    }
+    i++;
+  }
 }
 
 // Preconditie: kaarten moet een gesorteerde array zijn
@@ -637,23 +652,26 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
 
-  int west[aantalkaarten];
-  int noord[aantalkaarten];
-  int oost[aantalkaarten];
+  int spelerskaarten[aantalspelers][aantalkaarten];
 
-
-  for (int i = 0; i < aantalkaarten; i++) {
-    west[i] = -1;
-    noord[i] = -1;
-    oost[i] = -1;
+  for (int i = 0; i < aantalspelers; i++) {
+    if (i == huidigespeler) {
+      for (int j = 0; j < aantalkaarten; j++)
+        spelerskaarten[i][j] = kaarten[j];
+    }
+    else {
+      for (int j = 0; j < aantalkaarten; j++) {
+        spelerskaarten[i][j] = -1;
+      }
+    }
   }
 
   // int spelers[aantalspelers] = {2, 2, 2, 2};
 
 
-  deelrestkaarten(opgegooid, slag, komtuit, huidigespeler, kaarten, west, noord, oost);
+  deelrestkaarten(opgegooid, slag, komtuit, huidigespeler, spelerskaarten);
   cout << "MC Schatting kaarten:" << endl;
-  printkaarten(kaarten, west, noord, oost);
+  printkaarten(spelerskaarten[0], spelerskaarten[1], spelerskaarten[2], spelerskaarten[3]);
   
   // speel(spelers, opgegooid, kaarten, west, noord, oost, 0, 0, 0, false);
   cout << "Random punten: " << opgegooid[aantalslagen][huidigespeler] << endl;
@@ -692,7 +710,7 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
           int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten],
           int slag, int huidigespeler, int komtuit, bool output) {
 
-  int* spelerskaarten[4] = {zuid, west, noord, oost};    // Array met pointers naar de kaarten van spelers
+  int* spelerskaarten[aantalspelers] = {zuid, west, noord, oost};    // Array met pointers naar de kaarten van spelers
 
   while (slag < aantalslagen) {
     for (int i = 0; i < aantalspelers; i++) {
