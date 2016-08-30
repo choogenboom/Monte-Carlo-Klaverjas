@@ -509,7 +509,7 @@ int checkroem(int originelekaarten[aantalspelers]) {
   return roem;
 }
 
-int waardeerkaarten(int kaarten[aantalspelers]) {
+int waardeerkaarten(int kaarten[aantalspelers], bool output) {
   int punten = 0;
   int roem = 0;
 
@@ -517,12 +517,14 @@ int waardeerkaarten(int kaarten[aantalspelers]) {
     punten += waardeerkaart(kaarten[i]);
   }
 
-  cout << punten << " punten";
+  if (output)
+    cout << punten << " punten";
   if (metroem) {
     roem = checkroem(kaarten);
-    cout << " en " << roem << " roem." << endl;
+    if (output)
+      cout << " en " << roem << " roem." << endl;
   }
-  else
+  else if (output)
     cout << "." << endl;
 
   return punten + roem;
@@ -634,11 +636,6 @@ int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int
   int maxkaart = aantalkaarten - slag;
 
   geefmogelijkheden(opgegooid, maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
-
-  // cout << aantalmogelijkheden << " mogelijkheden: ";
-  // for (int i = 0; i < aantalmogelijkheden; i++)
-  //   cout << Kaarten(mogelijkekaarten[i]);
-  // cout << endl;
   
   int randomkaart = rand() % aantalmogelijkheden;
   deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
@@ -666,14 +663,14 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
     }
   }
 
-  // int spelers[aantalspelers] = {2, 2, 2, 2};
+  int spelers[aantalspelers] = {2, 2, 2, 2};
 
 
   deelrestkaarten(opgegooid, slag, komtuit, huidigespeler, spelerskaarten);
   cout << "MC Schatting kaarten:" << endl;
   printkaarten(spelerskaarten[0], spelerskaarten[1], spelerskaarten[2], spelerskaarten[3]);
   
-  // speel(spelers, opgegooid, kaarten, west, noord, oost, 0, 0, 0, false);
+  speel(spelers, opgegooid, spelerskaarten[0], spelerskaarten[1], spelerskaarten[2], spelerskaarten[3], 0, 0, 0, false);
   cout << "Random punten: " << opgegooid[aantalslagen][huidigespeler] << endl;
   
   geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
@@ -724,8 +721,11 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
           waarde = usermove(spelerskaarten[huidigespeler], slag);
       else if (spelers[huidigespeler] == 1) {
         waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler);
-        if (output)
+        if (output) {
+          cout << "Echte kaarten: " << endl;
+          printkaarten(zuid, west, noord, oost);
           cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+        }
       }
       else {
         waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler);
@@ -741,7 +741,7 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
 
     komtuit = winnaar(opgegooid[slag], komtuit);
     opgegooid[slag][aantalspelers] = komtuit;
-    opgegooid[slag][aantalspelers + 1] = waardeerkaarten(opgegooid[slag]);
+    opgegooid[slag][aantalspelers + 1] = waardeerkaarten(opgegooid[slag], output);
     
     if (slag == aantalslagen - 1)
       opgegooid[slag][aantalspelers + 1] = opgegooid[slag][aantalspelers + 1] + 10;
