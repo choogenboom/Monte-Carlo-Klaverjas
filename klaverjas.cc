@@ -20,7 +20,7 @@ enum Kaarten {
   X = -1
 };
 
-int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 2], 
+int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 3], 
           int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten],
           int slag, int huidigespeler, int komtuit, bool output);
 
@@ -313,14 +313,15 @@ int winnaar(int kaarten[aantalspelers], int komtuit) {
   return hoogste[0];
 }
 
-void printspel(int opgegooid[aantalslagen + 1][aantalspelers + 2]) {
+void printspel(int opgegooid[aantalslagen + 1][aantalspelers + 3]) {
   cout << endl << "Opgegooide kaarten:" << endl;
 
   for (int i = 0; i < aantalslagen; i++) {
     for (int j = 0; j < aantalspelers; j++) {
       cout << Kaarten(opgegooid[i][j]) << " ";
     }
-    cout << " speler " << opgegooid[i][aantalspelers] << " met " << opgegooid[i][aantalspelers + 1] << " punten." << endl;
+    cout << " speler " << opgegooid[i][aantalspelers + 1] << " met " << opgegooid[i][aantalspelers + 2] << " punten. " 
+         << opgegooid[i][aantalspelers] << " kwam uit." << endl;
   }
 
   if (opgegooid[aantalslagen][0] != -1) {
@@ -398,7 +399,7 @@ void printarray(int input[], int maxkaart) {
   cout << endl;
 }
 
-void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int slag, int komtuit, int huidigespeler, 
+void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int slag, int komtuit, int huidigespeler, 
                      int spelerskaarten[aantalspelers][aantalkaarten]) {
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
@@ -424,7 +425,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 2], int sla
         aantalgedelete++;
         wisselelement(index, allekaarten, maxkaart - (aantalgedelete));
 
-printarray(allekaarten, 31);
+// printarray(allekaarten, 31);
       }
     }
   }
@@ -442,11 +443,12 @@ printarray(allekaarten, 31);
     aantalgedelete++;
     wisselelement(index, allekaarten, maxkaart - aantalgedelete);
 
-printarray(allekaarten, 31);
+// printarray(allekaarten, 31);
   }
 
   maxkaart -= aantalgedelete;
 
+  // Hierna verdeleln we alle kaarten over de spelers:
   // Deel 2 spelers naast huidigespeler kaarten
   for (int i = 1; i <= aantalspelers - 2; i++) {
     for (int j = 0; j < aantalkaarten - slag - 1; j++) {
@@ -456,8 +458,7 @@ printarray(allekaarten, 31);
       wisselelement(randomkaart, allekaarten, maxkaart - 1);
       maxkaart--;
 
-printarray(allekaarten, 31);
-
+// printarray(allekaarten, 31);
     }
   }
 
@@ -468,7 +469,7 @@ printarray(allekaarten, 31);
     allekaarten[maxkaart - 1] = -1;
     maxkaart--;
 
-printarray(allekaarten, 31);
+// printarray(allekaarten, 31);
   }
 // cout << "maxkaart: " << maxkaart << endl;
 
@@ -480,8 +481,7 @@ printarray(allekaarten, 31);
       allekaarten[maxkaart - 1] = -1;
       maxkaart--;
 
-printarray(allekaarten, 31);
-
+// printarray(allekaarten, 31);
     }
     i++;
   }
@@ -550,15 +550,15 @@ int waardeerkaarten(int kaarten[aantalspelers], bool output) {
   return punten + roem;
 }
 
-int totaalwinnaar(int kaarten[aantalslagen][aantalspelers + 2]) {
+int totaalwinnaar(int kaarten[aantalslagen][aantalspelers + 3]) {
   int nultwee = 0;
   int eendrie = 0;
 
   for (int i = 0; i < aantalkaarten; i++) {
-    if (kaarten[i][aantalspelers] == 0 || kaarten[i][aantalspelers] == 2)
-      nultwee += kaarten[i][aantalspelers + 1];
+    if (kaarten[i][aantalspelers + 1] == 0 || kaarten[i][aantalspelers + 1] == 2)
+      nultwee += kaarten[i][aantalspelers + 2];
     else
-      eendrie += kaarten[i][aantalspelers + 1];
+      eendrie += kaarten[i][aantalspelers + 2];
   }
 
   kaarten[aantalslagen][0] = nultwee;
@@ -573,7 +573,7 @@ int totaalwinnaar(int kaarten[aantalslagen][aantalspelers + 2]) {
 }
 
 /* Argumenten:
- * - opgegooidekaarten: Laatste kaarten die opgegooid zijn, waaraan kleur bekend moet worden
+ * - opgegooid: Laatste kaarten die opgegooid zijn, waaraan kleur bekend moet worden
  * - maxkaart: Hoeveel kaarten de speler nog in zijn handen heeft
  * - komtuit: De speler die uitgekomen is, wiens kleur we moeten bekennen
  * - huidigespeler: De huidige speler (in dit geval dus computer). Alleen nodig voor Amsterdams
@@ -581,13 +581,13 @@ int totaalwinnaar(int kaarten[aantalslagen][aantalspelers + 2]) {
  * - mogelijkekaarten: hierin worden de mogelijk opgegooide kaarten gereturnt
  * - aantalmogelijkheden: hierin wordt het aantal mogelijke kaarten gereturnt
  */
-void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int komtuit, 
+void geefmogelijkheden(int opgegooid[aantalspelers + 3], int maxkaart, int komtuit, 
                        int huidigespeler, int mijnkaarten[aantalkaarten], 
                        int mogelijkekaarten[aantalkaarten], int & aantalmogelijkheden) {
   aantalmogelijkheden = 0;
   // Als wij kleur mogen bepalen is alles mogelijk
-  if (opgegooidekaarten[komtuit] != -1) {
-    int kleur = kleurvankaart(opgegooidekaarten[komtuit]);
+  if (opgegooid[komtuit] != -1) {
+    int kleur = kleurvankaart(opgegooid[komtuit]);
 
     // Eerst kijken we of we kleur kunnen bekennen
     if (kleur != troefkleur) {
@@ -607,9 +607,9 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int k
 
       // Check wat de hoogste opgegooide troef was
       for (int i = 0; i < aantalspelers; i++) {
-        if (istroef(opgegooidekaarten[i])) {
-          if (opgegooidekaarten[i] > hoogstopgegooid) {
-            hoogstopgegooid = opgegooidekaarten[i];
+        if (istroef(opgegooid[i])) {
+          if (opgegooid[i] > hoogstopgegooid) {
+            hoogstopgegooid = opgegooid[i];
             ligtaan = i;
           }
         }
@@ -642,7 +642,7 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int k
   // Als we ook niet in kunnen troeven zijn alle kaarten mogelijk
   // Hetzelfde geldt voor als wij de kleur mogen bepalen of 
   // als we Amsterdams spelen en de slag aan de maat ligt
-  if (aantalmogelijkheden == 0 || (opgegooidekaarten[komtuit == -1] && aantalmogelijkheden == 0)) {
+  if (aantalmogelijkheden == 0 || (opgegooid[komtuit == -1] && aantalmogelijkheden == 0)) {
     for (int i = 0; i < maxkaart; i++) {
       mogelijkekaarten[i] = mijnkaarten[i];
       aantalmogelijkheden++;
@@ -650,7 +650,7 @@ void geefmogelijkheden(int opgegooidekaarten[aantalspelers], int maxkaart, int k
   }
 }
 
-int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int slag, int komtuit, int huidigespeler) {
+int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 3], int slag, int komtuit, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
@@ -668,7 +668,7 @@ int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 2], int
   return mogelijkekaarten[randomkaart];
 }
 
-int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalspelers + 2], 
+int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalspelers + 3], 
                    int slag, int komtuit, int huidigespeler) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
@@ -741,7 +741,7 @@ int usermove(int kaarten[aantalkaarten], int slag) {
   }
 }
 
-int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 2], 
+int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 3], 
           int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten],
           int slag, int huidigespeler, int komtuit, bool output) {
 
@@ -777,12 +777,18 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
     if (output)
       cout << "Winnaar: " << winnaar(opgegooid[slag], komtuit) << endl;
 
+    // Achter de spelers komt een nummer wie uitkwam, wie won en met hoeveel punten
     komtuit = winnaar(opgegooid[slag], komtuit);
-    opgegooid[slag][aantalspelers] = komtuit;
-    opgegooid[slag][aantalspelers + 1] = waardeerkaarten(opgegooid[slag], output);
+    opgegooid[slag][aantalspelers + 1] = komtuit;
+    opgegooid[slag][aantalspelers + 2] = waardeerkaarten(opgegooid[slag], output);
+
+    if (slag < aantalslagen - 1)
+      opgegooid[slag + 1][aantalspelers] = komtuit;
     
+    // 10 punten extra voor de laatste slag
     if (slag == aantalslagen - 1)
-      opgegooid[slag][aantalspelers + 1] = opgegooid[slag][aantalspelers + 1] + 10;
+      opgegooid[slag][aantalspelers + 2] = opgegooid[slag][aantalspelers + 2] + 10;
+
     if (output) {
       printkaarten(zuid, west, noord, oost);
       printspel(opgegooid);
@@ -810,7 +816,8 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
 int main(int argc, char* argv[]) {
   int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
   int spelers[aantalspelers];                            // Samenstelling van de spelers (mens/computer)
-  int opgegooid[aantalslagen + 1][aantalspelers + 2];
+  int opgegooid[aantalslagen + 1][aantalspelers + 3];
+  int komtuit = 0;
 
   parseargv(argc, argv, spelers);
   srand(time(NULL));
@@ -819,10 +826,12 @@ int main(int argc, char* argv[]) {
   printkaarten(zuid, west, noord, oost);
 
   for (int i = 0; i < aantalslagen + 1; i++)
-    for (int j = 0; j < aantalspelers + 2; j++)
+    for (int j = 0; j < aantalspelers + 3; j++)
       opgegooid[i][j] = -1;
 
-  speel(spelers, opgegooid, zuid, west, noord, oost, 0, 0, 0, true);
+  opgegooid[0][aantalspelers] = komtuit;
+
+  speel(spelers, opgegooid, zuid, west, noord, oost, 0, 0, komtuit, true);
   printspel(opgegooid);
   return 0;
 }
