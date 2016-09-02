@@ -413,12 +413,14 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalspelers + 3],
     for (int k = 0; k < aantalspelers; k++) {
       int j = (komtuit + k) % 4;
       int kaart = opgegooid[i][j];
-
-      if (j != komtuit && kleurvankaart(opgegooid[i][komtuit]) != kleurvankaart(kaart)) {
-        // Kleur is niet bekend en deze speler kwam niet uit
-        heeftniet[kleurvankaart(opgegooid[i][komtuit])][j] = true;
-        if (!istroef(kaart))
-          heeftniet[troefkleur][j] = true;
+      
+      if (kaart != -1) {
+        if (j != komtuit && kleurvankaart(opgegooid[i][komtuit]) != kleurvankaart(kaart)) {
+          // Kleur is niet bekend en deze speler kwam niet uit
+          heeftniet[kleurvankaart(opgegooid[i][komtuit])][j] = true;
+          if (!istroef(kaart))
+            heeftniet[troefkleur][j] = true;
+        }
       }
     }
   }
