@@ -331,6 +331,14 @@ void printspel(int opgegooid[aantalslagen + 1][aantalspelers + 3]) {
   cout << "---------------------------------------------" << endl;
 }
 
+void printarray(int input[], int maxkaart) {
+  cout << "Kaarten: ";
+  for (int i = 0; i < maxkaart; i++)
+    cout << input[i] << " ";
+
+  cout << endl;
+}
+
 int zoekelement(int element, int input[], int arraysize) {
   for (int i = 0; i < arraysize; i++)
     if (input[i] == element)
@@ -391,12 +399,37 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
     oost[j] = allekaarten[j];
 }
 
-void printarray(int input[], int maxkaart) {
-  cout << "Kaarten: ";
-  for (int i = 0; i < maxkaart; i++)
-    cout << input[i] << " ";
+void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalspelers + 3], 
+                      int slag, int komtuit, bool heeftniet[4][aantalspelers]) {
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      heeftniet[i][j] = false;
+    }
+  } 
 
-  cout << endl;
+  for (int i = 0; i <= slag; i++) {
+    int komtuit = opgegooid[i][aantalspelers];
+
+    for (int k = 0; k < aantalspelers; k++) {
+      int j = (komtuit + k) % 4;
+      int kaart = opgegooid[i][j];
+
+      if (j != komtuit && kleurvankaart(opgegooid[i][komtuit]) != kleurvankaart(kaart)) {
+        // Kleur is niet bekend en deze speler kwam niet uit
+        heeftniet[kleurvankaart(opgegooid[i][komtuit])][j] = true;
+        if (!istroef(kaart))
+          heeftniet[troefkleur][j] = true;
+      }
+    }
+  }
+
+  cout << "heeftniet: " << endl;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      cout << heeftniet[i][j] << " ";
+    }
+    cout << endl;
+  }
 }
 
 void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int slag, int komtuit, int huidigespeler, 
@@ -404,7 +437,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int aantalgedelete = 0;
-
+  bool heeftniet[4][aantalspelers];
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
     allekaarten[i] = (10 * floor(i / aantalkaarten) + i % aantalkaarten);
@@ -415,7 +448,6 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     for (int j = 0; j < aantalspelers; j++) {
       int k = (komtuit + j) % 4;
       if (opgegooid[i][k] != -1) {
-// cout << "Delete " << Kaarten(opgegooid[i][k]) << "...\n";
         int index = (aantalkaarten * floor(opgegooid[i][k] / 10) + opgegooid[i][k] % 10);
 
         if (allekaarten[index] != opgegooid[i][k])
@@ -424,16 +456,12 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
         allekaarten[index] = -1;
         aantalgedelete++;
         wisselelement(index, allekaarten, maxkaart - (aantalgedelete));
-
-// printarray(allekaarten, 31);
       }
     }
   }
 
-
   // Delete eigen overige kaarten 
   for (int i = 0; i < aantalkaarten - slag; i++) {
-// cout << "Delete " << Kaarten(spelerskaarten[huidigespeler][i]) << "...\n";
     int index = (aantalkaarten * floor(spelerskaarten[huidigespeler][i] / 10) + spelerskaarten[huidigespeler][i] % 10);
 
     if (allekaarten[index] != spelerskaarten[huidigespeler][i])
@@ -442,11 +470,12 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     allekaarten[index] = -1;
     aantalgedelete++;
     wisselelement(index, allekaarten, maxkaart - aantalgedelete);
-
-// printarray(allekaarten, 31);
   }
 
   maxkaart -= aantalgedelete;
+
+  berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
+
 
   // Hierna verdeleln we alle kaarten over de spelers:
   // Deel 2 spelers naast huidigespeler kaarten
@@ -457,8 +486,6 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
       allekaarten[randomkaart] = -1;
       wisselelement(randomkaart, allekaarten, maxkaart - 1);
       maxkaart--;
-
-// printarray(allekaarten, 31);
     }
   }
 
@@ -468,10 +495,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[maxkaart - 1];
     allekaarten[maxkaart - 1] = -1;
     maxkaart--;
-
-// printarray(allekaarten, 31);
   }
-// cout << "maxkaart: " << maxkaart << endl;
 
   // Overige kaarten verdelen over spelers die nog niet opgegooid hebben
   int i = 0;
@@ -480,8 +504,6 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
       spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[maxkaart - 1];
       allekaarten[maxkaart - 1] = -1;
       maxkaart--;
-
-// printarray(allekaarten, 31);
     }
     i++;
   }
