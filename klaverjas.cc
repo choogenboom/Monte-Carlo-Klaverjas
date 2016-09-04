@@ -434,6 +434,19 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalspelers + 3],
   }
 }
 
+bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet[4][aantalspelers], int maxkaart) {
+  for (int i = 0; i < aantalspelers; i++) {
+    for (int j = 0; j < aantalkaarten - maxkaart; j++) {
+      if (heeftniet[kleurvankaart(spelerskaarten[i][j])][i]) {
+        cout << "Speler " << i << " heeft kleur " << kleurvankaart(spelerskaarten[i][j]) << " onterecht gekregen!" << endl;
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int slag, int komtuit, int huidigespeler, 
                      int spelerskaarten[aantalspelers][aantalkaarten]) {
   int allekaarten[aantalkaarten * aantalspelers];
