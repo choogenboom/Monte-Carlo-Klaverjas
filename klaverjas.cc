@@ -479,35 +479,32 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
   berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
 
 
-  // Hierna verdeleln we alle kaarten over de spelers:
-  // Deel 2 spelers naast huidigespeler kaarten
-  for (int i = 1; i <= aantalspelers - 2; i++) {
-    for (int j = 0; j < aantalkaarten - slag - 1; j++) {
-      int randomkaart = rand() % (maxkaart - 1);
-      spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
-      allekaarten[randomkaart] = -1;
-      wisselelement(randomkaart, allekaarten, maxkaart - 1);
-      maxkaart--;
-    }
-  }
+  // Hierna verdelen we alle kaarten over de spelers:
+  for (int i = 0; i < 4; i++) {
+    int aantalheeftniet = 0;
+    int heeftwel = -1;
 
-  // cout << "Deel speler " << (huidigespeler + 3) % 4 << " de laatste kaarten" << endl;
-  // Deel speler links van huidigespeler (+3 %4) de rest van de kaarten
-  for (int i = 0; i < aantalkaarten - slag - 1; i++) {
-    spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[maxkaart - 1];
-    allekaarten[maxkaart - 1] = -1;
-    maxkaart--;
-  }
+    // Check hoeveel spelers een kleur niet hebben, exclusief jezelf
+    for (int j = 0; j < aantalspelers; j++)
+      if (j != huidigespeler && heeftniet[i][j] == true)
+        aantalheeftniet++;
+      else
+        heeftwel = j;
 
-  // Overige kaarten verdelen over spelers die nog niet opgegooid hebben
-  int i = 0;
-  while (maxkaart > 0) {
-    if (opgegooid[slag][i] == -1 && huidigespeler != i) {
-      spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[maxkaart - 1];
-      allekaarten[maxkaart - 1] = -1;
-      maxkaart--;
+    // Als 2 spelers een kleur niet hebben zit alles bij de 3e
+    if (aantalheeftniet == 2) {
+      int n = 0;
+      for (int k = 0; k < maxkaart; k++) {
+        if (kleurvankaart(allekaarten[k]) == i) {
+          spelerskaarten[heeftwel][n] = allekaarten[k];
+          allekaarten[k] = -1;
+          wisselelement(k, allekaarten, maxkaart - 1);
+          maxkaart--;
+          n++;
+        }
+      }
+      printarray(allekaarten, maxkaart);
     }
-    i++;
   }
 }
 
