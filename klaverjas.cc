@@ -475,7 +475,6 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
   }
 
   maxkaart -= aantalgedelete;
-
   berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
 
 
@@ -501,6 +500,8 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
           wisselelement(k, allekaarten, maxkaart - 1);
           maxkaart--;
           n++;
+          // Degene waarmee gewisseld is kan ook die kleur zijn
+          k--;
         }
       }
       printarray(allekaarten, maxkaart);
