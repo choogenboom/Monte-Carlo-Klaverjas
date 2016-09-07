@@ -479,6 +479,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
 
 
   // Hierna verdelen we alle kaarten over de spelers:
+  // Eerst verdelen we de kaarten die een bepaalde speler moet hebben
   for (int i = 0; i < 4; i++) {
     int aantalheeftniet = 0;
     int heeftwel = -1;
@@ -487,7 +488,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     for (int j = 0; j < aantalspelers; j++)
       if (j != huidigespeler && heeftniet[i][j] == true)
         aantalheeftniet++;
-      else
+      else if (j != huidigespeler)
         heeftwel = j;
 
     // Als 2 spelers een kleur niet hebben zit alles bij de 3e
