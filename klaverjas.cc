@@ -488,33 +488,63 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
   }
 
   maxkaart -= aantalgedelete;
-  int maxorig = maxkaart;
   berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
 
+  int aantalgedeeld[aantalspelers] = {0, 0, 0, 0};
+
   // Hierna verdelen we alle kaarten over de spelers:
-  // Deel 2 spelers naast huidigespeler kaarten
+  // Eerst verdelen we de kaarten die een bepaalde speler moet hebben
+  for (int i = 0; i < 4; i++) {
+    int aantalheeftniet = 0;
+    int heeftwel = -1;
+
+    // Check hoeveel spelers een kleur niet hebben, exclusief jezelf
+    for (int j = 0; j < aantalspelers; j++)
+      if (j != huidigespeler && heeftniet[i][j] == true)
+        aantalheeftniet++;
+      else if (j != huidigespeler)
+        heeftwel = j;
+
+    // Als 2 spelers een kleur niet hebben zit alles bij de 3e
+    if (aantalheeftniet == 2) {
+      for (int k = 0; k < maxkaart; k++) {
+        if (kleurvankaart(allekaarten[k]) == i) {
+          spelerskaarten[heeftwel][aantalgedeeld[heeftwel]] = allekaarten[k];
+          allekaarten[k] = -1;
+          wisselelement(k, allekaarten, maxkaart - 1);
+          maxkaart--;
+          aantalgedeeld[heeftwel]++;
+          // Degene waarmee gewisseld is kan ook die kleur zijn
+          k--;
+        }
+      }
+    }
+  }
+
+  int maxorig = maxkaart;
+
+  // Daarna delen we de rest van de kaarten
   bool goededeling = false;
   while (!goededeling) {
     maxkaart = maxorig;
     for (int i = 1; i <= aantalspelers - 2; i++) {
-      for (int j = 0; j < aantalkaarten - slag - 1; j++) {
-        int randomkaart = rand() % (maxkaart - 1);
-        spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
-        // allekaarten[randomkaart] = -1;
-        wisselelement(randomkaart, allekaarten, maxkaart - 1);
-        maxkaart--;
+      for (int j = aantalgedeeld[(huidigespeler + i) % 4]; j < aantalkaarten - slag - 1; j++) {
+          int randomkaart = rand() % (maxkaart - 1);
+          spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
+          allekaarten[randomkaart] = -1;
+          wisselelement(randomkaart, allekaarten, maxkaart - 1);
+          maxkaart--;
       }
     }
 
-    // cout << "Deel speler " << (huidigespeler + 3) % 4 << " de laatste kaarten" << endl;
     // Deel speler links van huidigespeler (+3 %4) de rest van de kaarten
-    for (int i = 0; i < aantalkaarten - slag - 1; i++) {
-      int randomkaart = rand() % (aantalkaarten - slag - i - 1);
+    for (int i = aantalgedeeld[(huidigespeler + 3) % 4]; i < aantalkaarten - slag - 1; i++) {
+        int randomkaart = rand() % (aantalkaarten - slag - i - 1);
 
-      spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[randomkaart];
-      wisselelement(randomkaart, allekaarten, maxkaart - 1);
-      // allekaarten[maxkaart - 1] = -1;
-      maxkaart--;
+        spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[randomkaart];
+        wisselelement(randomkaart, allekaarten, maxkaart - 1);
+        allekaarten[maxkaart - 1] = -1;
+        maxkaart--;
     }
 
     // Overige kaarten verdelen over spelers die nog niet opgegooid hebben
@@ -522,7 +552,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     while (maxkaart > 0) {
       if (opgegooid[slag][i] == -1 && huidigespeler != i) {
         spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[maxkaart - 1];
-        // allekaarten[maxkaart - 1] = -1;
+        allekaarten[maxkaart - 1] = -1;
         maxkaart--;
       }
       i++;
