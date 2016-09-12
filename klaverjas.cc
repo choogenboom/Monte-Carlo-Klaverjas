@@ -522,6 +522,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
   }
 
   int maxorig = maxkaart;
+  int aantaldelingen = 0;
 
   // Daarna delen we de rest van de kaarten
   bool goededeling = false;
@@ -529,9 +530,8 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     maxkaart = maxorig;
     for (int i = 1; i <= aantalspelers - 2; i++) {
       for (int j = aantalgedeeld[(huidigespeler + i) % 4]; j < aantalkaarten - slag - 1; j++) {
-          int randomkaart = rand() % (maxkaart - 1);
+          int randomkaart = rand() % (maxkaart);
           spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
-          allekaarten[randomkaart] = -1;
           wisselelement(randomkaart, allekaarten, maxkaart - 1);
           maxkaart--;
       }
@@ -539,11 +539,10 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
 
     // Deel speler links van huidigespeler (+3 %4) de rest van de kaarten
     for (int i = aantalgedeeld[(huidigespeler + 3) % 4]; i < aantalkaarten - slag - 1; i++) {
-        int randomkaart = rand() % (aantalkaarten - slag - i - 1);
+        int randomkaart = rand() % (aantalkaarten - slag - i);
 
         spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[randomkaart];
         wisselelement(randomkaart, allekaarten, maxkaart - 1);
-        allekaarten[maxkaart - 1] = -1;
         maxkaart--;
     }
 
@@ -551,15 +550,19 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     int i = 0;
     while (maxkaart > 0) {
       if (opgegooid[slag][i] == -1 && huidigespeler != i) {
-        spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[maxkaart - 1];
-        allekaarten[maxkaart - 1] = -1;
+        int randomkaart = rand() % (maxkaart);
+        spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[randomkaart];
+        wisselelement(randomkaart, allekaarten, maxkaart - 1);
         maxkaart--;
       }
       i++;
     }
 
     goededeling = checkdeling(spelerskaarten, heeftniet, aantalkaarten - slag);
+    aantaldelingen++;
   }
+
+  cout << aantaldelingen << " delingen nodig gehad." << endl;
 }
 
 // Preconditie: kaarten moet een gesorteerde array zijn
