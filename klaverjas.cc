@@ -528,6 +528,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
   bool goededeling = false;
   while (!goededeling) {
     maxkaart = maxorig;
+
     for (int i = 1; i <= aantalspelers - 2; i++) {
       for (int j = aantalgedeeld[(huidigespeler + i) % 4]; j < aantalkaarten - slag - 1; j++) {
           int randomkaart = rand() % (maxkaart);
@@ -549,7 +550,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     // Overige kaarten verdelen over spelers die nog niet opgegooid hebben
     int i = 0;
     while (maxkaart > 0) {
-      if (opgegooid[slag][i] == -1 && huidigespeler != i) {
+      if (opgegooid[slag][i] == -1 && huidigespeler != i && aantalgedeeld[i] != (aantalkaarten - slag)) {
         int randomkaart = rand() % (maxkaart);
         spelerskaarten[i][aantalkaarten - slag - 1] = allekaarten[randomkaart];
         wisselelement(randomkaart, allekaarten, maxkaart - 1);
