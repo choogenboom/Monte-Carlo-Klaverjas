@@ -8,6 +8,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
+const static int aantalrandompotjes = 10000;
 const static bool rotterdams = true;
 const static bool metroem = true;
 int troefkleur = 2;
@@ -21,7 +22,7 @@ enum Kaarten {
 };
 
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 3], 
-          int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten],
+          int spelerskaarten[aantalspelers][aantalkaarten],
           int slag, int huidigespeler, int komtuit, bool output);
 
 ostream& operator<<(ostream& os, const Kaarten kaart) {
@@ -243,26 +244,14 @@ void quicksort(int A[aantalspelers], int p, int r) {
   }
 }
 
-void printkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
-  cout << "0: ";
-  for (int i = 0; i < aantalkaarten; i++)
-    cout << Kaarten(zuid[i]) << " ";
-  cout << endl;
-
-  cout << "1: ";
-  for (int i = 0; i < aantalkaarten; i++)
-    cout << Kaarten(west[i]) << " ";
-  cout << endl;
-
-  cout << "2: ";
-  for (int i = 0; i < aantalkaarten; i++)
-    cout << Kaarten(noord[i]) << " ";
-  cout << endl;
-
-  cout << "3: ";
-  for (int i = 0; i < aantalkaarten; i++)
-    cout <<  Kaarten(oost[i]) << " ";
-  cout << endl;
+void printkaarten(int spelerskaarten[aantalspelers][aantalkaarten]) {
+  for (int i = 0; i < aantalspelers; i++) {
+    cout << i << ": ";
+    
+    for (int j = 0; j < aantalkaarten; j++)
+      cout << Kaarten(spelerskaarten[i][j]) << " ";
+    cout << endl;
+  }
 }
 
 int winnaar(int kaarten[aantalspelers], int komtuit) {
@@ -365,7 +354,7 @@ void deleteelement(int element, int input[], int arraysize) {
   }
 }  
 
-void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten]) {
+void deelkaarten(int spelerskaarten[aantalspelers][aantalkaarten]) {
   int allekaarten[aantalkaarten * aantalspelers];
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
@@ -374,29 +363,17 @@ void deelkaarten(int zuid[aantalkaarten], int west[aantalkaarten], int noord[aan
   // Pak een willekeurige kaart uit allekaarten, haal deze uit de array en 
   // geef deze aan een speler.
   int maxkaart = aantalkaarten * aantalspelers;
-  for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1);
-    zuid[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
-    maxkaart--;
-  }
-
-  for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1);
-    west[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
-    maxkaart--;
-  }
-  
-  for (int j = 0; j < aantalkaarten; j++) {
-    int randomkaart = rand() % (maxkaart - 1);
-    noord[j] = allekaarten[randomkaart];
-    wisselelement(randomkaart, allekaarten, maxkaart - 1);
-    maxkaart--;
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    for (int j = 0; j < aantalkaarten; j++) {
+      int randomkaart = rand() % (maxkaart - 1);
+      spelerskaarten[i][j] = allekaarten[randomkaart];
+      wisselelement(randomkaart, allekaarten, maxkaart - 1);
+      maxkaart--;
+    }
   }
 
   for (int j = 0; j < aantalkaarten; j++)
-    oost[j] = allekaarten[j];
+    spelerskaarten[3][j] = allekaarten[j];
 }
 
 void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalspelers + 3], 
@@ -425,20 +402,19 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalspelers + 3],
     }
   }
 
-  cout << "heeftniet: " << endl;
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < aantalspelers; j++) {
-      cout << heeftniet[i][j] << " ";
-    }
-    cout << endl;
-  }
+  // cout << "heeftniet: " << endl;
+  // for (int i = 0; i < 4; i++) {
+  //   for (int j = 0; j < aantalspelers; j++) {
+  //     cout << heeftniet[i][j] << " ";
+  //   }
+  //   cout << endl;
+  // }
 }
 
 bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet[4][aantalspelers], int maxkaart) {
   for (int i = 0; i < aantalspelers; i++) {
     for (int j = 0; j < maxkaart; j++) {
       if (spelerskaarten[i][j] != -1 && heeftniet[kleurvankaart(spelerskaarten[i][j])][i]) {
-        // cout << "Speler " << i << " heeft kleur " << kleurvankaart(spelerskaarten[i][j]) << " onterecht gekregen!" << endl;
         return false;
       }
     }
@@ -563,7 +539,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     aantaldelingen++;
   }
 
-  cout << aantaldelingen << " delingen nodig gehad." << endl;
+  // cout << aantaldelingen << " delingen nodig gehad." << endl;
 }
 
 // Preconditie: kaarten moet een gesorteerde array zijn
@@ -729,17 +705,20 @@ void geefmogelijkheden(int opgegooid[aantalspelers + 3], int maxkaart, int komtu
   }
 }
 
-int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 3], int slag, int komtuit, int huidigespeler) {
+int randommove(int kaarten[aantalkaarten], int opgegooid[aantalspelers + 3], 
+               int slag, int komtuit, int huidigespeler, bool output) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
 
   geefmogelijkheden(opgegooid, maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
-   
-  cout << aantalmogelijkheden << " mogelijkheden: ";
-    for (int i = 0; i < aantalmogelijkheden; i++)
-     cout << Kaarten(mogelijkekaarten[i]);
-   cout << endl;
+  
+  if (output) { 
+    cout << aantalmogelijkheden << " mogelijkheden: ";
+      for (int i = 0; i < aantalmogelijkheden; i++)
+       cout << Kaarten(mogelijkekaarten[i]);
+     cout << endl;
+   }
 
   int randomkaart = rand() % aantalmogelijkheden;
   deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
@@ -752,47 +731,66 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
-  // int spelers[aantalspelers] = {2, 2, 2, 2};
-  // int kopie[aantalslagen + 1][aantalspelers + 2];
-
+  int spelers[aantalspelers] = {2, 2, 2, 2};
+  int kopie[aantalslagen + 1][aantalspelers + 3];
   int spelerskaarten[aantalspelers][aantalkaarten];
 
-  for (int i = 0; i < aantalspelers; i++) {
-    if (i == huidigespeler) {
-      for (int j = 0; j < aantalkaarten; j++)
-        spelerskaarten[i][j] = kaarten[j];
-    }
-    else {
-      for (int j = 0; j < aantalkaarten; j++) {
-        spelerskaarten[i][j] = -1;
+  geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+
+  // Als er maar 1 mogelijkheid is moeten we deze doen.
+  if (aantalmogelijkheden == 1) {
+    deleteelement(mogelijkekaarten[0], kaarten, maxkaart);
+    return mogelijkekaarten[0];
+  }
+
+  // Nu doen we aantalrandompotjes potjes voor elke mogelijke kaart
+  int beste[2] = {-1, -1}; // beste[0] = beste kaart, beste [1] = aantal punten
+  for (int i = 0; i < aantalmogelijkheden; i++) {
+    int punten = 0;
+    maxkaart = aantalkaarten - slag;
+
+    for (int j = 0; j < aantalrandompotjes; j++) {
+
+      // Eerst maken we een kopie van de kaarten, leeg voor de andere spelers
+      for (int k = 0; k < aantalspelers; k++) {
+        if (k == huidigespeler) {
+          for (int l = 0; l < aantalkaarten; l++)
+            spelerskaarten[k][l] = kaarten[l];
+        }
+        else {
+          for (int l = 0; l < aantalkaarten; l++) {
+            spelerskaarten[k][l] = -1;
+          }
+        }
       }
+
+      // Maak een kopie van de opgegooide kaarten om een random potje mee te spelen
+      for (int k = 0; k < aantalslagen + 1; k++) {
+        for (int l = 0; l < aantalspelers + 3; l++) {
+          kopie[k][l] = opgegooid[k][l];
+        }
+      }
+
+      // Doe de zet in de kopie
+      deelrestkaarten(kopie, slag, komtuit, huidigespeler, spelerskaarten);
+      kopie[slag][huidigespeler] = mogelijkekaarten[i];
+      deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
+      // printkaarten(spelerskaarten);
+
+      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false);
+
+      punten += kopie[aantalslagen][huidigespeler];
+    }
+    cout << "Punten voor " << Kaarten(mogelijkekaarten[i]) << " is " << punten << endl;
+
+    if (punten > beste[1]) {
+      beste[0] = i;
+      beste[1] = punten;
     }
   }
 
-  // Maak een kopie van de opgegooide kaarten om een random potje mee te spelen
-  // for (int i = 0; i < aantalslagen + 1; i++) {
-  //   for (int j = 0; j < aantalspelers + 2; j++) {
-  //     kopie[i][j] = opgegooid[i][j];
-  //   }
-  // }
-
-  int zet = randommove(kaarten, opgegooid[slag], slag, komtuit, huidigespeler);
-
-  // Doe de zet in de kopie
-  // opgegooid[slag][huidigespeler] = zet;
-
-  deelrestkaarten(opgegooid, slag, komtuit, huidigespeler, spelerskaarten);
-  cout << "MC Schatting kaarten:" << endl;
-  printkaarten(spelerskaarten[0], spelerskaarten[1], spelerskaarten[2], spelerskaarten[3]);
-  
-  // speel(spelers, kopie, spelerskaarten[0], spelerskaarten[1], spelerskaarten[2], 
-  //       spelerskaarten[3], slag, huidigespeler + 1, komtuit, false);
-  // printspel(kopie);
-  // cout << "Random punten: " << opgegooid[aantalslagen][huidigespeler] << endl;
-  
-  geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
-
-  return zet;
+  deleteelement(mogelijkekaarten[beste[0]], kaarten, maxkaart);
+  return mogelijkekaarten[beste[0]];
 }
 
 int usermove(int kaarten[aantalkaarten], int slag) {
@@ -820,38 +818,36 @@ int usermove(int kaarten[aantalkaarten], int slag) {
   }
 }
 
-int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 3], 
-          int zuid[aantalkaarten], int west[aantalkaarten], int noord[aantalkaarten], int oost[aantalkaarten],
-          int slag, int huidigespeler, int komtuit, bool output) {
-
-  int* spelerskaarten[aantalspelers] = {zuid, west, noord, oost};    // Array met pointers naar de kaarten van spelers
+int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspelers + 3],
+          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, int komtuit, bool output) {
 
   while (slag < aantalslagen) {
     for (int i = 0; i < aantalspelers; i++) {
-      int waarde = -1;
+      // Als we halverwege de slag invallen kan een speler al aan de beurt zijn geweest
+      if (opgegooid[slag][huidigespeler] == -1) {
+        int waarde = -1;
 
-      if (output)
-        cout << "Speler " << huidigespeler << " aan de beurt, " << komtuit << " komt uit. " << endl;
-
-      if (spelers[huidigespeler] == 0)
-        while (waarde == -1)
-          waarde = usermove(spelerskaarten[huidigespeler], slag);
-      else if (spelers[huidigespeler] == 1) {
-        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler);
-        if (output) {
-          cout << "Echte kaarten: " << endl;
-          printkaarten(zuid, west, noord, oost);
-          cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
-        }
-      }
-      else {
-        waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler);
         if (output)
-          cout << "Random heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+          cout << "Speler " << huidigespeler << " aan de beurt, " << komtuit << " komt uit. " << endl;
+
+        if (spelers[huidigespeler] == 0)
+          while (waarde == -1)
+            waarde = usermove(spelerskaarten[huidigespeler], slag);
+        else if (spelers[huidigespeler] == 1) {
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler);
+          if (output) {
+            cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+          }
+        }
+        else {
+          waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, output);
+          if (output)
+            cout << "Random heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+        }
+        
+        opgegooid[slag][huidigespeler] = waarde;
+        huidigespeler = (huidigespeler + 1) % aantalspelers;
       }
-      
-      opgegooid[slag][huidigespeler] = waarde;
-      huidigespeler = (huidigespeler + 1) % aantalspelers;
     }
     if (output)
       cout << "Winnaar: " << winnaar(opgegooid[slag], komtuit) << endl;
@@ -869,7 +865,7 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
       opgegooid[slag][aantalspelers + 2] = opgegooid[slag][aantalspelers + 2] + 10;
 
     if (output) {
-      printkaarten(zuid, west, noord, oost);
+      printkaarten(spelerskaarten);
       printspel(opgegooid);
     }
 
@@ -893,7 +889,8 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
 }
 
 int main(int argc, char* argv[]) {
-  int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
+  // int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
+  int spelerskaarten[aantalspelers][aantalkaarten];
   int spelers[aantalspelers];                            // Samenstelling van de spelers (mens/computer)
   int opgegooid[aantalslagen + 1][aantalspelers + 3];
   int komtuit = 0;
@@ -901,8 +898,8 @@ int main(int argc, char* argv[]) {
   parseargv(argc, argv, spelers);
   srand(time(NULL));
 
-  deelkaarten(zuid, west, noord, oost);
-  printkaarten(zuid, west, noord, oost);
+  deelkaarten(spelerskaarten);
+  printkaarten(spelerskaarten);
 
   for (int i = 0; i < aantalslagen + 1; i++)
     for (int j = 0; j < aantalspelers + 3; j++)
@@ -910,7 +907,7 @@ int main(int argc, char* argv[]) {
 
   opgegooid[0][aantalspelers] = komtuit;
 
-  speel(spelers, opgegooid, zuid, west, noord, oost, 0, 0, komtuit, true);
+  speel(spelers, opgegooid, spelerskaarten, 0, 0, komtuit, true);
   printspel(opgegooid);
   return 0;
 }
