@@ -423,7 +423,7 @@ bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet
   return true;
 }
 
-void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int slag, int komtuit, int huidigespeler, 
+int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int slag, int komtuit, int huidigespeler, 
                      int spelerskaarten[aantalspelers][aantalkaarten]) {
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
@@ -539,7 +539,7 @@ void deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int sla
     aantaldelingen++;
   }
 
-  // cout << aantaldelingen << " delingen nodig gehad." << endl;
+  return aantaldelingen;
 }
 
 // Preconditie: kaarten moet een gesorteerde array zijn
@@ -747,6 +747,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int beste[2] = {-1, -1}; // beste[0] = beste kaart, beste [1] = aantal punten
   for (int i = 0; i < aantalmogelijkheden; i++) {
     int punten = 0;
+    int delingen = 0;
     maxkaart = aantalkaarten - slag;
 
     for (int j = 0; j < aantalrandompotjes; j++) {
@@ -772,7 +773,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       }
 
       // Doe de zet in de kopie
-      deelrestkaarten(kopie, slag, komtuit, huidigespeler, spelerskaarten);
+      delingen += deelrestkaarten(kopie, slag, komtuit, huidigespeler, spelerskaarten);
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
       // printkaarten(spelerskaarten);
@@ -781,7 +782,9 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
 
       punten += kopie[aantalslagen][huidigespeler];
     }
-    cout << "Punten voor " << Kaarten(mogelijkekaarten[i]) << " is " << punten << endl;
+
+    cout << "Punten voor " << Kaarten(mogelijkekaarten[i]) << " is " << punten 
+         << ", in gemiddeld " << delingen / aantalrandompotjes << " delingen." << endl;
 
     if (punten > beste[1]) {
       beste[0] = i;
