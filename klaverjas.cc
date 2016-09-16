@@ -11,7 +11,7 @@ const static int aantalkaarten = 8;
 const static int aantalrandompotjes = 10000;
 const static bool rotterdams = true;
 const static bool metroem = true;
-int troefkleur = 2;
+int troefkleur = 1;
 
 enum Kaarten {
   S7 = 0,  S8, SV, SH, S10, SA, S9, SB, 
@@ -542,6 +542,17 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalspelers + 3], int slag
   return aantaldelingen;
 }
 
+bool checkvierdezelfde(int kaarten[aantalspelers]) {
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    int kaart = kaarten[i] - 10 * kleurvankaart(kaarten[i]);
+
+    if (kaart != kaarten[i + 1] - 10 * kleurvankaart(kaarten[i + 1]))
+      return false;
+  }
+
+  return true;
+}
+
 // Preconditie: kaarten moet een gesorteerde array zijn
 bool checkstuk(int kaarten[aantalspelers]) {
   int troefvrouw = 10 * troefkleur + 5;
@@ -559,6 +570,10 @@ bool checkstuk(int kaarten[aantalspelers]) {
 int checkroem(int originelekaarten[aantalspelers]) {
   int roem = 0;
   int kaarten[aantalspelers];
+
+  // Als het 4 dezelfde kaarten zijn is het 100 roem
+  if (checkvierdezelfde(originelekaarten))
+    return 100;
 
   for (int i = 0; i < aantalspelers; i++) {
     kaarten[i] = roemvolgorde(originelekaarten[i]);
@@ -891,11 +906,29 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalspel
   }
 }
 
+void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int opgegooid[aantalslagen + 1][aantalspelers + 3]) {
+
+}
+
 int main(int argc, char* argv[]) {
-  // int zuid[aantalkaarten], west[aantalkaarten], noord[aantalkaarten], oost[aantalkaarten];
-  int spelerskaarten[aantalspelers][aantalkaarten];
-  int spelers[aantalspelers];                            // Samenstelling van de spelers (mens/computer)
+  /*               Samenstelling van opgegooid-array:
+   *  zuid   west   noord   oost  |  komtuit   gewonnen   punten
+   *  ...                         |
+   *  ...                         |
+   * ------------------------------------------------------------
+   *  z+n    w+o     z+n    w+o   |   speelt   troefkleur
+  */
   int opgegooid[aantalslagen + 1][aantalspelers + 3];
+  
+  /*                Verdeling van de spelersvormen:
+   * - 0: Menselijke speler, kaart moet gekozen worden
+   * - 1: Monte Carlo speler
+   * - 2: Semi-random speler
+   * - 3: Volledig random speler
+  */
+  int spelers[aantalspelers];
+
+  int spelerskaarten[aantalspelers][aantalkaarten];
   int komtuit = 0;
 
   parseargv(argc, argv, spelers);
@@ -903,6 +936,7 @@ int main(int argc, char* argv[]) {
 
   deelkaarten(spelerskaarten);
   printkaarten(spelerskaarten);
+  bepaaltroef(spelerskaarten, opgegooid);
 
   for (int i = 0; i < aantalslagen + 1; i++)
     for (int j = 0; j < aantalspelers + 3; j++)
