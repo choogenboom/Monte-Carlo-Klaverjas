@@ -651,10 +651,13 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen]) {
   int eendrie = 0;
   int nultweeroem = teamroem(kaarten, 0);
   int eendrieroem = teamroem(kaarten, 1);
+  int slagen = 0; // We tellen alleen het aantal slagen voor 0+2 voor een pit
 
   for (int i = 0; i < aantalkaarten; i++) {
-    if (kaarten[i][aantalspelers + 1] == 0 || kaarten[i][aantalspelers + 1] == 2)
+    if (kaarten[i][aantalspelers + 1] == 0 || kaarten[i][aantalspelers + 1] == 2) {
       nultwee += kaarten[i][aantalspelers + 2];
+      slagen++;
+    }
     else
       eendrie += kaarten[i][aantalspelers + 2];
   }
@@ -669,6 +672,10 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen]) {
     else {
       nultwee += nultweeroem;
       eendrie += eendrieroem;
+
+      // Pit?
+      if (slagen == aantalslagen)
+        nultwee += 100;
     }
   }
   else {
@@ -681,6 +688,10 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen]) {
     else {
       nultwee += nultweeroem;
       eendrie += eendrieroem;
+
+      // Pit?
+      if (slagen == 0)
+        eendrie += 100;
     }
   }
 
