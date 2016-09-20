@@ -633,10 +633,10 @@ int teamroem(int opgegooid[aantalslagen + 1][aantalkolommen], int speler) {
   return roem;
 }
 
-int waardeerkaarten(int kaarten[aantalspelers], bool output) {
+int waardeerkaarten(int kaarten[], int maxkaart, bool output) {
   int punten = 0;
 
-  for (int i = 0; i < aantalspelers; i++) {
+  for (int i = 0; i < maxkaart; i++) {
     punten += waardeerkaart(kaarten[i]);
   }
 
@@ -927,7 +927,7 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
     // Achter de spelers komt een nummer wie uitkwam, wie won en met hoeveel punten
     komtuit = winnaar(opgegooid[slag], komtuit);
     opgegooid[slag][aantalspelers + 1] = komtuit;
-    opgegooid[slag][aantalspelers + 2] = waardeerkaarten(opgegooid[slag], output);
+    opgegooid[slag][aantalspelers + 2] = waardeerkaarten(opgegooid[slag], aantalspelers, output);
     opgegooid[slag][aantalspelers + 3] = geefroem(opgegooid[slag], output);
 
     if (slag < aantalslagen - 1)
@@ -959,6 +959,64 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
            << " 0 en 2 hadden er " << opgegooid[aantalslagen][0] << endl;
     return 1;
   }
+}
+
+// Speelt als de hand meer dan 40 punten is (dus altijd met boer-nel)
+bool puntenspeelt(int kaarten[aantalkaarten]) {
+  int punten = waardeerkaarten(kaarten, aantalkaarten, true);
+
+  return (punten > 40);
+}
+
+// Speelt op basis van aantal troeven
+bool troefspeelt(int kaarten[aantalkaarten]) {
+  int troeven = 0;
+  int azen = 0;
+  bool boer = false;
+  bool nel = false;
+
+  for (int i = 0; i < aantalkaarten; i++) {
+    int kaart = kaarten[i] - (10 * kleurvankaart(kaarten[i]));
+    if (istroef(kaarten[i])) {
+      troeven++;
+      if (kaart == 7)
+        boer = true;
+      else if (kaart == 6)
+        nel = true;
+    }
+
+    if (kaart == 5)
+      azen++;
+  }
+
+  if (boer && nel)
+    return true;
+  else if (boer) {
+    // Alleen de boer, niet de nel
+    if (troeven > 2)
+      return true;
+    else {
+      // Boer + 1 extra troef of alleen boer
+      if (azen >= 2)
+        return true;
+    }
+    // B A . .?
+  }
+  else if (nel) {
+    // Alleen de nel, niet de boer
+    // Met kale nel spelen we sowieso niet
+    if (troeven == 1)
+      return false;
+    if (troeven > 3)
+      return true;
+    else {
+      // Nel en max 2 troeven ernaast
+      if (azen >= 2)
+        return true;
+    }
+  }
+
+  return false;
 }
 
 bool userspeelt(int kaarten[aantalkaarten], int kleur) {
@@ -995,10 +1053,10 @@ int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers
     //   if (montecarlospeelt(spelerskaarten[maghetzeggen]))
     //     speelt = maghetzeggen;
     // }
-    // else {
-    //   if (randomspeelt(spelerskaarten[maghetzeggen]))
-    //     speelt = maghetzeggen;
-    // }
+    else {
+      if (troefspeelt(spelerskaarten[maghetzeggen]))
+        speelt = maghetzeggen;
+    }
 
     if (speelt != -1)
       break;
@@ -1009,33 +1067,33 @@ int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers
 
 void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers],
                  int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit) {
-  int kleur = rand() % 4;
   int speelt = -1;
   int i = 0;
+  troefkleur = rand() % 4;
 
   while (speelt == -1) {
     int nieuwekleur = rand() % 4;
 
     if (i < 2) {
-      while (nieuwekleur == kleur)
+      while (nieuwekleur == troefkleur)
         nieuwekleur = rand() % 4;
 
-      kleur = nieuwekleur;
-      speelt = speelpasrondje(spelerskaarten, spelers, kleur, komtuit);
+      troefkleur = nieuwekleur;
+      speelt = speelpasrondje(spelerskaarten, spelers, troefkleur, komtuit);
     }
     else {
       speelt = komtuit;
-      kleur = nieuwekleur;
+      troefkleur = nieuwekleur;
     }
 
     i++;
   }
 
-  cout << speelt << " speelt op " << Kleuren(kleur) << endl;
+  cout << speelt << " speelt op " << Kleuren(troefkleur) << endl;
 
   opgegooid[aantalslagen][aantalspelers] = speelt;
-  opgegooid[aantalslagen][aantalspelers + 1] = kleur;
-  troefkleur = kleur;
+  opgegooid[aantalslagen][aantalspelers + 1] = troefkleur;
+  // troefkleur = kleur;
 }
 
 int main(int argc, char* argv[]) {
