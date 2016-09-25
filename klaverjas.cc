@@ -174,7 +174,10 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers]) {
 }
 
 int kleurvankaart(int kaart) {
-  return (kaart - (kaart % 10)) / 10;
+  if (kaart == -1)
+    return -1;
+  else
+    return (kaart - (kaart % 10)) / 10;
 }
 
 bool istroef(int kaart) {
@@ -209,6 +212,10 @@ int waardeerkaart(int kaart) {
 
 // Zet het nummer van een kaart om in 7 8 9 10 B V H A volgorde
 int roemvolgorde(int kaart) {
+  // Als de kaart nog niet opgegooid is maken we hem -2 zodat er geen roem mee valt
+  if (kaart == -1)
+    return -2;
+
   int kleur = kleurvankaart(kaart);
   kaart = kaart % 10;
 
@@ -414,14 +421,6 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
       }
     }
   }
-
-  // cout << "heeftniet: " << endl;
-  // for (int i = 0; i < 4; i++) {
-  //   for (int j = 0; j < aantalspelers; j++) {
-  //     cout << heeftniet[i][j] << " ";
-  //   }
-  //   cout << endl;
-  // }
 }
 
 bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet[4][aantalspelers], int maxkaart) {
@@ -785,6 +784,102 @@ void geefmogelijkheden(int opgegooid[aantalkolommen], int maxkaart, int komtuit,
   }
 }
 
+int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
+                   int slag, int komtuit, int huidigespeler, bool output) {
+  int mogelijkekaarten[aantalkaarten];
+  int slechtekaarten[aantalkaarten];       // Domme kaarten, gooien roem bij tegenstander of punten weg
+  int kopiekaarten[aantalspelers];
+  int aantalmogelijkheden = 0;
+  int maxkaart = aantalkaarten - slag;
+  int slagwinnaar = -1;
+  int aantalslechte = 0;
+  int roemvoorkaart = checkroem(opgegooid);
+
+  geefmogelijkheden(opgegooid, maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+
+  // Als er maar 1 mogelijkheid is moeten we deze doen.
+  if (aantalmogelijkheden == 1) {
+    deleteelement(mogelijkekaarten[0], kaarten, maxkaart);
+    return mogelijkekaarten[0];
+  }
+
+  // We maken een kopie van de opgegooide kaarten om de kaarten in 'op te gooien'
+  for (int i = 0; i < aantalspelers; i++)
+    kopiekaarten[i] = opgegooid[i];
+
+  for (int i = 0; i < aantalmogelijkheden; i++) {
+    int kleur = kleurvankaart(mogelijkekaarten[i]);
+    int kaart = mogelijkekaarten[i] - 10 * kleur;
+
+    kopiekaarten[huidigespeler] = mogelijkekaarten[i];
+    slagwinnaar = winnaar(kopiekaarten, komtuit);
+
+    if (!(slagwinnaar == huidigespeler || slagwinnaar == maat(huidigespeler))) {
+      // Slag ligt NIET aan ons, geen roem of hoge kaart weggooien
+      // Alleen als we de laatste zijn die opgooien houden we rekening met roem
+      if ((huidigespeler == (komtuit + 3) % 4) && checkroem(kopiekaarten) > roemvoorkaart) {
+        if (output)
+          cout << "Niet in de roem leggen..." << endl;
+        slechtekaarten[aantalslechte] = mogelijkekaarten[i];
+        aantalslechte++;
+      }
+      else if (kleur != kleurvankaart(opgegooid[komtuit]) && kleur != troefkleur) {
+        if (kaart == 5 || kaart == 4) {
+          if (output)
+            cout << "Aas of 10 niet weggooien..." << endl;
+          slechtekaarten[aantalslechte] = mogelijkekaarten[i];
+          aantalslechte++;
+        }
+      }
+    }
+  }
+
+  if (aantalslechte > 0 && (aantalmogelijkheden - aantalslechte > 0)) {
+    if (output) {
+        cout << aantalslechte << " slechte kaarten verwijderen: ";
+        for (int i = 0; i < aantalslechte; i++)
+          cout << Kaarten(slechtekaarten[i]);
+        cout << endl;
+    }
+
+    // Verwijder de slechte kaarten uit mogelijkekaarten
+    for (int i = 0; i < aantalslechte; i++) {
+      for (int j = 0; j < aantalmogelijkheden - i; j++) {
+        if (mogelijkekaarten[j] == slechtekaarten[i]) {
+          deleteelement(slechtekaarten[i], mogelijkekaarten, aantalmogelijkheden - i);
+          aantalmogelijkheden--;
+        }
+      }
+    }
+
+    // Nieuwe mogelijkekaarten printen
+    if (output) {
+      cout << "Wel mogelijke kaarten: ";
+      for (int i = 0; i < aantalmogelijkheden; i++)
+        cout << Kaarten(mogelijkekaarten[i]);
+      cout << endl;
+    }
+
+    int randomkaart = rand() % aantalmogelijkheden;
+    deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
+
+    return mogelijkekaarten[randomkaart];
+  }
+  else {
+    if (output) {
+      cout << aantalmogelijkheden << " normale mogelijkheden: ";
+      for (int i = 0; i < aantalmogelijkheden; i++)
+        cout << Kaarten(mogelijkekaarten[i]);
+      cout << endl;
+    }
+
+    int randomkaart = rand() % aantalmogelijkheden;
+    deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
+
+    return mogelijkekaarten[randomkaart];
+  }
+}
+
 int randommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen], 
                int slag, int komtuit, int huidigespeler, bool output) {
   int mogelijkekaarten[aantalkaarten];
@@ -807,11 +902,11 @@ int randommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
 }
 
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen], 
-                   int slag, int komtuit, int huidigespeler) {
+                   int slag, int komtuit, int huidigespeler, int niveaurandom) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
-  int spelers[aantalspelers] = {2, 2, 2, 2};
+  int spelers[aantalspelers] = {niveaurandom, niveaurandom, niveaurandom, niveaurandom};
   int kopie[aantalslagen + 1][aantalkolommen];
   int spelerskaarten[aantalspelers][aantalkaarten];
 
@@ -917,7 +1012,18 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
           while (waarde == -1)
             waarde = usermove(spelerskaarten[huidigespeler], slag);
         else if (spelers[huidigespeler] == 1) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 2);
+          if (output) {
+            cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+          }
+        }
+        else if (spelers[huidigespeler] == 2) {
+          waarde = semiramdommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, output);
+          if (output)
+            cout << "Semirandom heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+        }
+        else if (spelers[huidigespeler] == 3) {
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4);
           if (output) {
             cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
           }
