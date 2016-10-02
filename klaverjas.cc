@@ -646,9 +646,11 @@ int waardeerkaarten(int kaarten[], int maxkaart, bool output) {
   return punten;
 }
 
-int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen]) {
+int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage) {
   int nultwee = 0;
   int eendrie = 0;
+  float nultweeperc = 0.0;
+  float eendrieperc = 0.0;
   int nultweeroem = teamroem(kaarten, 0);
   int eendrieroem = teamroem(kaarten, 1);
   int slagen = 0; // We tellen alleen het aantal slagen voor 0+2 voor een pit
@@ -695,6 +697,12 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen]) {
     }
   }
 
+  if (percentage) {
+    nultweeperc = (float) nultwee / (float)(nultwee + eendrie);
+    eendrieperc = (float) eendrie / (float)(nultwee + eendrie);
+    nultwee = nultweeperc * 100;
+    eendrie = eendrieperc * 100;
+  }
 
   kaarten[aantalslagen][0] = nultwee;
   kaarten[aantalslagen][1] = eendrie;
@@ -1065,7 +1073,7 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
   }
 
     // Printen wie uiteindelijk met hoeveel punten gewonnen heeft
-  if (totaalwinnaar(opgegooid) == 0) {
+  if (totaalwinnaar(opgegooid, false) == 0) {
     if (output)
       cout << "0 en 2 hebben gewonnen met " << opgegooid[aantalslagen][0] << " punten!"
            << " 1 en 3 hadden er " << opgegooid[aantalslagen][1] << endl;
@@ -1107,7 +1115,7 @@ bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit) {
     zij += opgegooid[aantalslagen][1];
   }
 
-  cout << "Punten: " << wij << endl;
+  cout << "Punten: " << wij << " op " << Kleuren(troefkleur) << endl;
   return (wij > zij);
 }
 
@@ -1232,6 +1240,7 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
       speelt = speelpasrondje(spelerskaarten, spelers, troefkleur, komtuit);
     }
     else {
+      cout << "Verplicht!" << endl;
       speelt = komtuit;
       troefkleur = nieuwekleur;
     }
@@ -1252,15 +1261,16 @@ int main(int argc, char* argv[]) {
    *  ...                         |
    *  ...                         |
    * -------------------------------------------------------------------
-   *  z+n    w+o     z+n    w+o   |   speelt   troefkleur
+   *  z+n %  w+o %   z+n    w+o   |   speelt   troefkleur
   */
   int opgegooid[aantalslagen + 1][aantalkolommen];
 
   /*                Verdeling van de spelersvormen:
    * - 0: Menselijke speler, kaart moet gekozen worden
-   * - 1: Monte Carlo speler
+   * - 1: Monte Carlo speler met semirandomspeler potjes
    * - 2: Semi-random speler
-   * - 3: Volledig random speler
+   * - 3: Monte Carlo speler met volledig random potjes
+   * - 4: Volledig random speler
   */
   int spelers[aantalspelers];
 
