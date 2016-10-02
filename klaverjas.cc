@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 using namespace std;
 
@@ -161,16 +164,110 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
   return os << s << " ";
 }
 
-void parseargv(int argc, char* argv[], int spelers[aantalspelers]) {
-  if (argc != aantalspelers + 1) {
-    cout << "Verkeerd aantal parameters meegegeven." << endl;
-    exit(0);
-  }
-  else {
+void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &file, string &filename) {
+  if (argc == aantalspelers + 1) {
     for (int i = 0; i < aantalspelers; i++) {
       spelers[i] = atoi(argv[i + 1]);
     }
   }
+  else if (argc == 3 && argv[1] == string("-f")) {
+    file = true;
+    filename = argv[2];
+  }
+  else {
+    cout << "Monte Carlo Klaverjas" << endl
+         << "---------------------" << endl << endl
+         << "Gebruik: "
+         << argv[0] << " # # # # " << endl
+         << "Met als # een getal als spelertype. Mogelijke spelertypes:" << endl
+         << " - 0: Menselijke speler, kaart moet gekozen worden" << endl
+         << " - 1: Monte Carlo speler met semirandomspeler potjes" << endl
+         << " - 2: Semi-random speler" << endl
+         << " - 3: Monte Carlo speler met volledig random potjes" << endl
+         << " - 4: Volledig random speler" << endl << endl
+         << "Ook kan een bestand ingelezen met -f, bijvoorbeeld: " << endl
+         << argv[0] << " -f voorbeeld.kvj" << endl;
+    exit(0);
+  }
+}
+
+/* De structuur van een .kvj bestand is als volgt:
+ * - eerste regel is de spelers[] array en bevat het type spelers (mens, random, MC)
+ * - regels 2 t/m 5 bevatten de kaarten van de spelers
+ * - regel 6 bevat de troefkleur. -1 voor nog te bepalen
+*/
+bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten[aantalspelers][aantalkaarten], int &troef) {
+  ifstream bestand(filename);
+  string regel;
+  int regels = 0;
+
+  if (bestand.is_open()) {
+    while (getline(bestand, regel)) {
+      istringstream iss(regel);
+
+      if (regels == 0) {
+        // spelers[] initieren
+
+        for (int i = 0; i < aantalspelers; i++) {
+          string substring;
+          int speler;
+
+          iss >> substring;
+          
+          try {
+            speler = stoi(substring);
+          }
+          catch (exception const & e) {
+            cout << "Error in regel " << regels << ":" << i << " van bestand " << filename << endl
+                 << "Character " << substring << " kon niet omgezet worden naar int" << endl;
+
+            return false;
+          }
+
+          spelers[i] = speler;
+        }
+      }
+      else if (regels == 5) {
+        // troefkleur bepalen
+        if (regel.length() != 1) {
+          cout << "Error in regel " << regels << " van bestand " << filename << ", te veel karakters" << endl;
+          return false;
+        }
+        try {
+          troef = stoi(regel);
+        }
+        catch (exception const & e) {
+          cout << "Error in bestand " << filename << ": troefkleur geen int" << endl;
+          return false;
+        }
+      }
+      else {
+        // spelerskaarten initieren
+        for (int i = 0; i < aantalkaarten; i++) {
+          string substring;
+          int kaart;
+
+          iss >> substring;
+
+          try {
+            kaart = stoi(substring);
+          }
+          catch (exception const & e) {
+            cout << "Error in regel " << regels << ":" << i << " van bestand " << filename << endl
+                 << "Character " << substring << " kon niet omgezet worden naar int" << endl;
+            return false;
+          }
+
+          spelerskaarten[regels - 1][i] = kaart;
+        }
+      }
+      regels++;
+    }
+  }
+  else
+    return false;
+
+  return true;
 }
 
 int kleurvankaart(int kaart) {
@@ -857,6 +954,7 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
         if (mogelijkekaarten[j] == slechtekaarten[i]) {
           deleteelement(slechtekaarten[i], mogelijkekaarten, aantalmogelijkheden - i);
           aantalmogelijkheden--;
+          // Niet naar voren gehaald?
         }
       }
     }
@@ -1275,22 +1373,51 @@ int main(int argc, char* argv[]) {
   int spelers[aantalspelers];
 
   int spelerskaarten[aantalspelers][aantalkaarten];
-  int komtuit = 0;
 
-  parseargv(argc, argv, spelers);
+  int komtuit = 0;
+  // Deze variabelen zijn alleen voor als er gegevens van een bestand worden ingelezen
+  // int slag = 0;
+  bool file = false;
+  int troef;
+
+  string filename = "";
+
+  parseargv(argc, argv, spelers, file, filename);
   srand(time(NULL));
 
-  for (int i = 0; i < aantalslagen + 1; i++)
-    for (int j = 0; j < aantalkolommen; j++)
-      opgegooid[i][j] = -1;
+  if (!file) {
+    for (int i = 0; i < aantalslagen + 1; i++)
+      for (int j = 0; j < aantalkolommen; j++)
+        opgegooid[i][j] = -1;
 
-  opgegooid[0][aantalspelers] = komtuit;
+    opgegooid[0][aantalspelers] = komtuit;
 
-  deelkaarten(spelerskaarten);
-  printkaarten(spelerskaarten);
-  bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit);
+    deelkaarten(spelerskaarten);
+    printkaarten(spelerskaarten);
+    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit);
+  }
+  else {
+    // leesbestand(filename, spelers, spelerskaarten, opgegooid, slag, komtuit);
+    if (!leesbestand(filename, spelers, spelerskaarten, troef)) {
+      cout << "Fout met inlezen van bestand" << endl;
+      return 0;
+    }
 
-  speel(spelers, opgegooid, spelerskaarten, 0, 0, komtuit, true);
+    if (troef != -1)
+      troefkleur = troef;
+    else
+      bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit);
+
+    for (int i = 0; i < aantalslagen + 1; i++) {
+      for (int j = 0; j < aantalkolommen; j++) {
+        opgegooid[i][j] = -1;      
+      }
+    }
+
+    opgegooid[0][aantalspelers] = komtuit;
+  }
+
+    speel(spelers, opgegooid, spelerskaarten, 0, 0, komtuit, true);
   printspel(opgegooid);
   return 0;
 }
