@@ -56,6 +56,12 @@ ostream& operator<<(ostream& os, const Kleuren kleur) {
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten],
           int slag, int huidigespeler, int komtuit, bool output);
+int winnaar(int kaarten[aantalspelers], int komtuit);
+int waardeerkaarten(int kaarten[], int maxkaart, bool output);
+int geefroem(int kaarten[aantalspelers], bool output);
+int zoekelement(int element, int input[], int arraysize);
+void wisselelement(int element, int input[], int arraysize);
+void deleteelement(int element, int input[], int arraysize);
 
 ostream& operator<<(ostream& os, const Kaarten kaart) {
   string s;
@@ -195,11 +201,15 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &file, s
  * - eerste regel is de spelers[] array en bevat het type spelers (mens, random, MC)
  * - regels 2 t/m 5 bevatten de kaarten van de spelers
  * - regel 6 bevat de troefkleur. -1 voor nog te bepalen
+ * - regel 7 bevat slag en komtuit
+ * - regels 8 t/m (8 + slag - 1) bevat opgegooid[][]
 */
-bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten[aantalspelers][aantalkaarten], int &troef) {
+bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten[aantalspelers][aantalkaarten], 
+                 int &troef, int opgegooid[aantalspelers + 1][aantalkolommen], int &slag, int &komtuit) {
   ifstream bestand(filename);
   string regel;
   int regels = 0;
+  int opgegooidregels = 0;
 
   if (bestand.is_open()) {
     while (getline(bestand, regel)) {
@@ -241,7 +251,7 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
           return false;
         }
       }
-      else {
+      else if (regels > 0 && regels < 5) {
         // spelerskaarten initieren
         for (int i = 0; i < aantalkaarten; i++) {
           string substring;
@@ -261,11 +271,75 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
           spelerskaarten[regels - 1][i] = kaart;
         }
       }
+      else if (regels == 6) {
+        // slag en komtuit initieren
+        string substring;
+        iss >> substring;
+        
+        try {
+          slag = stoi(substring);
+          iss >> substring;
+          komtuit = stoi(substring);
+        }
+        catch (exception const & e) {
+          cout << "Error in regel " << regels << " van bestand " << filename << endl
+               << "Character " << substring << " kon niet omgezet worden naar int" << endl;
+          return false;
+        }
+      }
+      else {
+        // opgegooid initieren
+        if (regels == 7) {
+          // Komtuit in de eerste regel van opgegooid zetten
+          opgegooid[0][aantalspelers] = komtuit;
+        }
+        if (opgegooidregels > aantalslagen) {
+          cout << "Error in regel " << regels << " van bestand " << filename << endl
+               << "Teveel regels voor opgegooid" << endl;
+          return false;
+        }
+        
+        for (int i = 0; i < slag; i ++) {
+          string substring;
+          iss >> substring;
+          
+          try {
+            opgegooid[regels - 7][i] = stoi(substring);
+          }
+          catch (exception const & e) {
+            cout << "Error in regel " << regels << ":" << i << " van bestand " << filename << endl
+                 << "Character " << substring << " kon niet omgezet worden naar int" << endl;
+          }
+        }
+
+        // Na de regel kunnen we winnaar & punten bepalen
+        int slagwinnaar = winnaar(opgegooid[regels - 7], komtuit);
+        opgegooid[regels - 6][aantalspelers] = slagwinnaar;
+        opgegooid[regels - 7][aantalspelers + 1] = slagwinnaar;
+        opgegooid[regels - 7][aantalspelers + 2] = waardeerkaarten(opgegooid[regels - 7], aantalspelers, false);
+        opgegooid[regels - 7][aantalspelers + 3] = geefroem(opgegooid[regels - 7], false);
+
+        opgegooidregels++;
+      }
+
       regels++;
     }
   }
   else
     return false;
+
+  // Delete opgegooide kaarten uit spelerskaarten
+  // int aantalgedelete = 0;
+  for (int i = 0; i < slag; i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      if (opgegooid[i][j] != -1) {
+        int index = zoekelement(opgegooid[i][j], spelerskaarten[j], aantalkaarten - i);
+
+        spelerskaarten[j][index] = -1;
+        wisselelement(index, spelerskaarten[j], aantalkaarten - i - 1);
+      }
+    }
+  }
 
   return true;
 }
@@ -1379,16 +1453,20 @@ int main(int argc, char* argv[]) {
   // int slag = 0;
   bool file = false;
   int troef;
-
+  int slag = 0;
+  int huidigespeler = 0;
   string filename = "";
 
   parseargv(argc, argv, spelers, file, filename);
   srand(time(NULL));
 
+  opgegooid[0][aantalspelers] = -1;
+
+  for (int i = 0; i < aantalslagen + 1; i++)
+    for (int j = 0; j < aantalkolommen; j++)
+      opgegooid[i][j] = -1;
+
   if (!file) {
-    for (int i = 0; i < aantalslagen + 1; i++)
-      for (int j = 0; j < aantalkolommen; j++)
-        opgegooid[i][j] = -1;
 
     opgegooid[0][aantalspelers] = komtuit;
 
@@ -1397,27 +1475,28 @@ int main(int argc, char* argv[]) {
     bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit);
   }
   else {
-    // leesbestand(filename, spelers, spelerskaarten, opgegooid, slag, komtuit);
-    if (!leesbestand(filename, spelers, spelerskaarten, troef)) {
-      cout << "Fout met inlezen van bestand" << endl;
+    if (!leesbestand(filename, spelers, spelerskaarten, troef, opgegooid, slag, komtuit))
       return 0;
-    }
 
     if (troef != -1)
       troefkleur = troef;
     else
       bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit);
 
-    for (int i = 0; i < aantalslagen + 1; i++) {
-      for (int j = 0; j < aantalkolommen; j++) {
-        opgegooid[i][j] = -1;      
+    if (opgegooid[0][aantalspelers] != komtuit) {
+      for (int i = 0; i < aantalslagen + 1; i++) {
+        for (int j = 0; j < aantalkolommen; j++) {
+          opgegooid[i][j] = -1;      
+        }
       }
+      
+      opgegooid[0][aantalspelers] = komtuit;
     }
 
-    opgegooid[0][aantalspelers] = komtuit;
+    huidigespeler = opgegooid[slag][aantalspelers];
   }
 
-    speel(spelers, opgegooid, spelerskaarten, 0, 0, komtuit, true);
+  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, true);
   printspel(opgegooid);
   return 0;
 }
