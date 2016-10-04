@@ -1291,11 +1291,51 @@ bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit) {
   return (wij > zij);
 }
 
-// Speelt als de hand meer dan 40 punten is (dus altijd met boer-nel)
-bool puntenspeelt(int kaarten[aantalkaarten]) {
-  int punten = waardeerkaarten(kaarten, aantalkaarten, true);
+bool gedekt(int kaart, int kaarten[]) {
+  int kleur = kleurvankaart(kaart);
 
-  return (punten > 40);
+  for (int i = 0; i < aantalkaarten; i++) {
+    if (kleurvankaart(kaarten[i]) == kleur && kaart != kaarten[i])
+      return true;
+  }
+
+  return false;
+}
+
+/* Speelt op basis van een aangepast handwaarderingssysteem voor Bridge.
+ * - A krijgt 3 punten
+ * - 10 krijgt 2 punten
+ * - H krijgt 1 punt
+ * - Troefboer krijgt 5 punten
+ * - Troefnel krijgt 4 punten
+ * - Elke andere troef krijgt 1 punt
+ *
+ * Als dit in toaal meer dan de helft van alle mogelijke punten (39) zijn spelen we.
+ */
+bool puntenspeelt(int kaarten[aantalkaarten]) {
+  int punten = 0;
+
+  for (int i = 0; i < aantalkaarten; i++) {
+    int kaart = kaarten[i] - (10 * kleurvankaart(kaarten[i]));
+
+    if (kaart == 5)
+      punten += 3;
+    else if (kaart == 4 && gedekt(kaarten[i], kaarten))
+      punten += 2;
+    else if (kaart == 3)
+      punten += 1;
+
+    if (istroef(kaarten[i])) {
+      if (kaart == 7)
+        punten += 5;
+      else if (kaart == 6)
+        punten += 4;
+      else
+        punten += 1;
+    }
+  }
+  cout << punten << endl;
+  return (punten > 10);
 }
 
 // Speelt op basis van aantal troeven
@@ -1384,7 +1424,8 @@ int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers
         speelt = maghetzeggen;
     }
     else {
-      if (troefspeelt(spelerskaarten[maghetzeggen]))
+      // if (troefspeelt(spelerskaarten[maghetzeggen]))
+      if (puntenspeelt(spelerskaarten[maghetzeggen]))
         speelt = maghetzeggen;
     }
 
