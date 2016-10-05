@@ -200,8 +200,8 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &file, s
 /* De structuur van een .kvj bestand is als volgt:
  * - eerste regel is de spelers[] array en bevat het type spelers (mens, random, MC)
  * - regels 2 t/m 5 bevatten de kaarten van de spelers
- * - regel 6 bevat de troefkleur. -1 voor nog te bepalen
- * - regel 7 bevat slag en komtuit
+ * - regel 6 bevat de troefkleur, speelt en komtuit. -1 voor nog te bepalen
+ * - regel 7 bevat slag
  * - regels 8 t/m (8 + slag - 1) bevat opgegooid[][]
 */
 bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten[aantalspelers][aantalkaarten], 
@@ -210,6 +210,7 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
   string regel;
   int regels = 0;
   int opgegooidregels = 0;
+  int speelt = -1;
 
   if (bestand.is_open()) {
     while (getline(bestand, regel)) {
@@ -238,13 +239,22 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
         }
       }
       else if (regels == 5) {
-        // troefkleur bepalen
-        if (regel.length() != 1) {
-          cout << "Error in regel " << regels << " van bestand " << filename << ", te veel karakters" << endl;
+        // troefkleur bepalen, speelt en komtuit
+        if (regel.length() != 1 && regel.length() != 5) {
+          cout << "Error in regel " << regels << " van bestand " << filename << ", te veel karakters: " 
+               << regel.length() << endl;
           return false;
         }
+
+        string substring;
+        iss >> substring;
+
         try {
-          troef = stoi(regel);
+          troef = stoi(substring);
+          iss >> substring;
+          speelt = stoi(substring);
+          iss >> substring;
+          komtuit = stoi(substring);
         }
         catch (exception const & e) {
           cout << "Error in bestand " << filename << ": troefkleur geen int" << endl;
@@ -272,18 +282,13 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
         }
       }
       else if (regels == 6) {
-        // slag en komtuit initieren
-        string substring;
-        iss >> substring;
-        
+        // slag initieren
         try {
-          slag = stoi(substring);
-          iss >> substring;
-          komtuit = stoi(substring);
+          slag = stoi(regel);
         }
         catch (exception const & e) {
           cout << "Error in regel " << regels << " van bestand " << filename << endl
-               << "Character " << substring << " kon niet omgezet worden naar int" << endl;
+               << "Character " << regel << " kon niet omgezet worden naar int" << endl;
           return false;
         }
       }
@@ -318,6 +323,7 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
         opgegooid[regels - 7][aantalspelers + 1] = slagwinnaar;
         opgegooid[regels - 7][aantalspelers + 2] = waardeerkaarten(opgegooid[regels - 7], aantalspelers, false);
         opgegooid[regels - 7][aantalspelers + 3] = geefroem(opgegooid[regels - 7], false);
+        opgegooid[aantalslagen][aantalspelers] = speelt;
 
         opgegooidregels++;
       }
@@ -730,7 +736,7 @@ bool checkvierdezelfde(int kaarten[aantalspelers]) {
   for (int i = 0; i < aantalspelers - 1; i++) {
     int kaart = kaarten[i] - 10 * kleurvankaart(kaarten[i]);
 
-    if (kaart != kaarten[i + 1] - 10 * kleurvankaart(kaarten[i + 1]))
+    if (kaart != kaarten[i + 1] - 10 * kleurvankaart(kaarten[i + 1]) || kaarten[i] == -1)
       return false;
   }
 
@@ -1026,16 +1032,18 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
     for (int i = 0; i < aantalslechte; i++) {
       for (int j = 0; j < aantalmogelijkheden - i; j++) {
         if (mogelijkekaarten[j] == slechtekaarten[i]) {
-          deleteelement(slechtekaarten[i], mogelijkekaarten, aantalmogelijkheden - i);
+          // deleteelement(slechtekaarten[i], mogelijkekaarten, aantalmogelijkheden - i);
+          mogelijkekaarten[j] = -1;
+          wisselelement(j, mogelijkekaarten, aantalmogelijkheden - 1);
           aantalmogelijkheden--;
-          // Niet naar voren gehaald?
+          j--;
         }
       }
     }
 
     // Nieuwe mogelijkekaarten printen
     if (output) {
-      cout << "Wel mogelijke kaarten: ";
+      cout << "Wel mogelijke kaarten (" << aantalmogelijkheden << "): ";
       for (int i = 0; i < aantalmogelijkheden; i++)
         cout << Kaarten(mogelijkekaarten[i]);
       cout << endl;
