@@ -14,6 +14,9 @@ const static int aantalkaarten = 8;
 const static int aantalrandompotjes = 1000;
 const static bool rotterdams = true;
 const static bool metroem = true;
+
+const static bool tienennietweggooien = true;
+const static bool semirandom_bijmaat = true;
 // aantal kolommen voor opgegooid
 const static int aantalkolommen = aantalspelers + 4;
 // TODO: troefkleur in class
@@ -970,15 +973,18 @@ void geefmogelijkheden(int opgegooid[aantalkolommen], int maxkaart, int komtuit,
   }
 }
 
+// Doet een random zet, maar gooit geen azen, 10en en roem bij de tegenstander bij
 int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
                    int slag, int komtuit, int huidigespeler, bool output) {
   int mogelijkekaarten[aantalkaarten];
   int slechtekaarten[aantalkaarten];       // Domme kaarten, gooien roem bij tegenstander of punten weg
+  int beterekaarten[aantalkaarten];        // Slimmere kaarten, leggen roem bij maat
   int kopiekaarten[aantalspelers];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
   int slagwinnaar = -1;
   int aantalslechte = 0;
+  int aantalbetere = 0;
   int roemvoorkaart = checkroem(opgegooid);
 
   geefmogelijkheden(opgegooid, maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
@@ -1005,22 +1011,31 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
       // Alleen als we de laatste zijn die opgooien houden we rekening met roem
       if ((huidigespeler == (komtuit + 3) % 4) && checkroem(kopiekaarten) > roemvoorkaart) {
         if (output)
-          cout << "Niet in de roem leggen..." << endl;
+          cout << "Niet " << Kaarten(mogelijkekaarten[i]) << " in de roem leggen..." << endl;
         slechtekaarten[aantalslechte] = mogelijkekaarten[i];
         aantalslechte++;
       }
       else if (kleur != kleurvankaart(opgegooid[komtuit]) && kleur != troefkleur) {
-        if (kaart == 5 || kaart == 4) {
+        if (kaart == 5 || (kaart == 4 && tienennietweggooien)) {
           if (output)
-            cout << "Aas of 10 niet weggooien..." << endl;
+            cout << "Aas of 10 " << Kaarten(mogelijkekaarten[i]) << " niet weggooien..." << endl;
           slechtekaarten[aantalslechte] = mogelijkekaarten[i];
           aantalslechte++;
         }
       }
     }
+    else if (semirandom_bijmaat) {
+      // Slag ligt aan ons, roem bijleggen als het kan
+      if ((huidigespeler == (komtuit + 3) % 4) && checkroem(kopiekaarten) > roemvoorkaart) {
+        if (output)
+          cout << "Wel " << Kaarten(mogelijkekaarten[i]) << " in de roem leggen..." << endl;
+        beterekaarten[aantalbetere] = mogelijkekaarten[i];
+        aantalbetere++;
+      }
+    }
   }
 
-  if (aantalslechte > 0 && (aantalmogelijkheden - aantalslechte > 0)) {
+  if (aantalbetere == 0 && aantalslechte > 0 && (aantalmogelijkheden - aantalslechte > 0)) {
     if (output) {
         cout << aantalslechte << " slechte kaarten verwijderen: ";
         for (int i = 0; i < aantalslechte; i++)
@@ -1053,6 +1068,20 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
     deleteelement(mogelijkekaarten[randomkaart], kaarten, maxkaart);
 
     return mogelijkekaarten[randomkaart];
+  }
+  else if (aantalbetere > 0) {
+    // Betere (in de roem-leggende) mogelijkheden printen
+    if (output) {
+      cout << "Mogelijke betere kaarten (" << aantalbetere << "): ";
+      for (int i = 0; i < aantalbetere; i++)
+        cout << Kaarten(beterekaarten[i]);
+      cout << endl;
+    }
+
+    int randomkaart = rand() % aantalbetere;
+    deleteelement(beterekaarten[randomkaart], kaarten, maxkaart);
+
+    return beterekaarten[randomkaart];
   }
   else {
     if (output) {
