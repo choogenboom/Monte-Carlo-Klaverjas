@@ -1007,11 +1007,18 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
     slagwinnaar = winnaar(kopiekaarten, komtuit);
 
     if (!(slagwinnaar == huidigespeler || slagwinnaar == maat(huidigespeler))) {
-      // Slag ligt NIET aan ons, geen roem of hoge kaart weggooien
-      // Alleen als we de laatste zijn die opgooien houden we rekening met roem
+      // Slag ligt NIET aan ons, geen roem of hoge weggooien.
       if ((huidigespeler == (komtuit + 3) % 4) && checkroem(kopiekaarten) > roemvoorkaart) {
+        // We zijn de laatste speler, dus geen roem bijleggen
         if (output)
-          cout << "Niet " << Kaarten(mogelijkekaarten[i]) << " in de roem leggen..." << endl;
+          cout << "Niet " << Kaarten(mogelijkekaarten[i]) << " in de roem leggen (4e)..." << endl;
+        slechtekaarten[aantalslechte] = mogelijkekaarten[i];
+        aantalslechte++;
+      }
+      else if ((huidigespeler == (komtuit + 2) % 4) && checkroem(kopiekaarten) > roemvoorkaart) {
+        // We zijn de een na laatste speler, dus ook geen roem bijleggen
+        if (output)
+          cout << "Niet " << Kaarten(mogelijkekaarten[i]) << " in de roem leggen (3e)..." << endl;
         slechtekaarten[aantalslechte] = mogelijkekaarten[i];
         aantalslechte++;
       }

@@ -31,5 +31,7 @@ str = str.replace("2: ", "")
 str = str.replace("3: ", "")
 
 kleur = input("Voer troefkleur in (-1 voor nog te bepalen): ")
+speelt = input("Voer in wie speelt: ")
+komtuit = input("Voer in wie uitkomt: ")
 
-f2.write(spelers + str + "\n" + kleur + "\n")
+f2.write(spelers + str + kleur + " " + speelt + " " + komtuit + "\n")
