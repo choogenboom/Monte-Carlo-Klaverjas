@@ -959,6 +959,17 @@ void geefmogelijkheden(int opgegooid[aantalkolommen], int maxkaart, int komtuit,
           }
         }
       }
+      else if (kleur == troefkleur) {
+        // We spelen Amsterdams, troef is gevraagd en hij ligt aan de maat. Ondertroeven:
+        if (aantalmogelijkheden == 0) {
+          for (int i = 0; i < maxkaart; i++) {
+            if (kleurvankaart(mijnkaarten[i]) == troefkleur) {
+              mogelijkekaarten[aantalmogelijkheden] = mijnkaarten[i];
+              aantalmogelijkheden++;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -988,6 +999,12 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
   int roemvoorkaart = checkroem(opgegooid);
 
   geefmogelijkheden(opgegooid, maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+
+cout << "Mogelijke kaarten: ";
+for (int i = 0; i < aantalmogelijkheden; i++) {
+  cout << Kaarten(mogelijkekaarten[i]);
+}
+cout << endl;
 
   // Als er maar 1 mogelijkheid is moeten we deze doen.
   if (aantalmogelijkheden == 1) {
@@ -1579,6 +1596,7 @@ int main(int argc, char* argv[]) {
     }
 
     huidigespeler = opgegooid[slag][aantalspelers];
+    printkaarten(spelerskaarten);
   }
 
   speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, true);
