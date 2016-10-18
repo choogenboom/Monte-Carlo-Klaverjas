@@ -174,7 +174,7 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
   return os << s << " ";
 }
 
-void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &experiment, bool &file, string &filename) {
+void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &experiment, bool &file, string &filename, int &seed) {
   if (argc == aantalspelers + 1) {
     for (int i = 0; i < aantalspelers; i++) {
       spelers[i] = atoi(argv[i + 1]);
@@ -184,8 +184,9 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &experim
     file = true;
     filename = argv[2];
   }
-  else if (argc == aantalspelers + 2 && argv[1] == string("-e")) {
+  else if (argc == aantalspelers + 3 && argv[1] == string("-e")) {
     experiment = true;
+    seed = atoi(argv[6]);
 
     for (int i = 0; i < aantalspelers; i++) {
       spelers[i] = atoi(argv[i + 2]);
@@ -1564,10 +1565,11 @@ int main(int argc, char* argv[]) {
   int troef;
   int slag = 0;
   int huidigespeler = 0;
+  int seed = time(NULL);
   string filename = "";
 
-  parseargv(argc, argv, spelers, experiment, file, filename);
-  srand(time(NULL));
+  parseargv(argc, argv, spelers, experiment, file, filename, seed);
+  srand(seed);
 
   opgegooid[0][aantalspelers] = -1;
 
