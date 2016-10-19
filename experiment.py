@@ -4,10 +4,10 @@ import random
 	
 num = 16
 
-sp1 = '1'
-sp2 = '2'
-sp3 = '1'
-sp4 = '2'
+sp1 = '2'
+sp2 = '4'
+sp3 = '2'
+sp4 = '4'
 
 som1 = 0
 som2 = 0
@@ -18,7 +18,7 @@ f = open('result.txt', 'w')
 
 for i in range(num):
   seed = str(random.randint(0,2147483647))
-  print(seed)
+  # print(seed)
   rout = check_output(['./klaverjas', '-e', sp1, sp2, sp3, sp4, seed])
   output = str(rout)[2:-3]
 
