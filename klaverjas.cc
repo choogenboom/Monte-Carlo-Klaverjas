@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <climits>
 
 using namespace std;
 
@@ -174,7 +175,8 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
   return os << s << " ";
 }
 
-void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &experiment, bool &file, string &filename, int &seed) {
+void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit, 
+               bool &experiment, bool &file, string &filename, int &seed) {
   if (argc == aantalspelers + 1) {
     for (int i = 0; i < aantalspelers; i++) {
       spelers[i] = atoi(argv[i + 1]);
@@ -184,13 +186,23 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &experim
     file = true;
     filename = argv[2];
   }
-  else if (argc == aantalspelers + 3 && argv[1] == string("-e")) {
-    experiment = true;
-    seed = atoi(argv[6]);
+  else if (argv[1] == string("-e")) {
+    if (argc >= aantalspelers + 3) {
+      experiment = true;
+      seed = atoi(argv[6]);
 
-    for (int i = 0; i < aantalspelers; i++) {
-      spelers[i] = atoi(argv[i + 2]);
+      for (int i = 0; i < aantalspelers; i++) {
+        spelers[i] = atoi(argv[i + 2]);
+      }
+
+      if (argc > aantalspelers + 3) {
+        komtuit = atoi(argv[7]);
+      }
     }
+  }
+  else if (argv[1] == string("-im")) {
+    cout << UINT_MAX << endl;
+    exit(0);
   }
   else {
     cout << "Monte Carlo Klaverjas" << endl
@@ -205,7 +217,8 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], bool &experim
          << " - 4: Volledig random speler" << endl << endl
          << "Ook kan een bestand ingelezen met -f, bijvoorbeeld: " << endl
          << argv[0] << " -f voorbeeld.kvj" << endl
-         << "Met -e wordt de output geminimaliseerd voor experimenten." << endl;
+         << "Met -e wordt de output geminimaliseerd voor experimenten." << endl
+         << "Als -im wordt opgegeven wordt alleen INT_MAX geoutput en afgesloten." << endl;
     exit(0);
   }
 }
@@ -1568,7 +1581,7 @@ int main(int argc, char* argv[]) {
   int seed = time(NULL);
   string filename = "";
 
-  parseargv(argc, argv, spelers, experiment, file, filename, seed);
+  parseargv(argc, argv, spelers, komtuit, experiment, file, filename, seed);
   srand(seed);
 
   opgegooid[0][aantalspelers] = -1;
@@ -1589,6 +1602,7 @@ int main(int argc, char* argv[]) {
     if (!experiment)
       printkaarten(spelerskaarten);
 
+    huidigespeler = opgegooid[slag][aantalspelers];
     bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output);
   }
   else {
