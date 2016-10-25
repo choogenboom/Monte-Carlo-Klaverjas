@@ -44,13 +44,13 @@ ostream& operator<<(ostream& os, const Kleuren kleur) {
       s = "♠";
       break;
     case (Harten):
-      s = "\033[1;31m♥\033[0m";
+      s = "♥";
       break;
     case (Klaver):
       s = "♣";
       break;
     case (Ruiten):
-      s = "\033[1;31m♦\033[0m";
+      s = "♦";
       break;
   }
 
@@ -95,28 +95,28 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
       s = "♠A ";
       break;
     case (H7):
-      s = "\033[1;31m♥\033[0m7 ";
+      s = "♥7 ";
       break;
     case (H8):
-      s = "\033[1;31m♥\033[0m8 ";
+      s = "♥8 ";
       break;
     case (H9):
-      s = "\033[1;31m♥\033[0m9 ";
+      s = "♥9 ";
       break;
     case (HB):
-      s = "\033[1;31m♥\033[0mB ";
+      s = "♥B ";
       break;
     case (HV):
-      s = "\033[1;31m♥\033[0mV ";
+      s = "♥V ";
       break;
     case (HH):
-      s = "\033[1;31m♥\033[0mH ";
+      s = "♥H ";
       break;
     case (H10):
-      s = "\033[1;31m♥\033[0m10";
+      s = "♥10";
       break;
     case (HA):
-      s = "\033[1;31m♥\033[0mA ";
+      s = "♥A ";
       break;
     case (K7):
       s = "♣7 ";
@@ -143,28 +143,28 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
       s = "♣A ";
       break;
     case (R7):
-      s = "\033[1;31m♦\033[0m7 ";
+      s = "♦7 ";
       break;
     case (R8):
-      s = "\033[1;31m♦\033[0m8 ";
+      s = "♦8 ";
       break;
     case (R9):
-      s = "\033[1;31m♦\033[0m9 ";
+      s = "♦9 ";
       break;
     case (RB):
-      s = "\033[1;31m♦\033[0mB ";
+      s = "♦B ";
       break;
     case (RV):
-      s = "\033[1;31m♦\033[0mV ";
+      s = "♦V ";
       break;
     case (RH):
-      s = "\033[1;31m♦\033[0mH ";
+      s = "♦H ";
       break;
     case (R10):
-      s = "\033[1;31m♦\033[0m10";
+      s = "♦10";
       break;
     case (RA):
-      s = "\033[1;31m♦\033[0mA ";
+      s = "♦A ";
       break;
     case (X):
       s = "\033[1;31mX\033[0m  ";
@@ -440,8 +440,8 @@ int wiespeelt(int opgegooid[aantalslagen + 1][aantalkolommen]) {
 
 // We gebruiken insertion sort omdat dit goed presteert (en stabiel is)
 // op rijen van kleine invoer. Onze invoer is normaalgesproken 4.
-void insertionsort(int input[aantalspelers]) {
-  for (int i = 1; i < aantalspelers; i++) {
+void insertionsort(int input[], int max) {
+  for (int i = 1; i < max; i++) {
     int hulp = input[i];
     int j = i - 1;
 
@@ -782,7 +782,7 @@ int checkroem(int originelekaarten[aantalspelers]) {
     kaarten[i] = roemvolgorde(originelekaarten[i]);
   }
 
-  insertionsort(kaarten);
+  insertionsort(kaarten, aantalspelers);
 
   for (int i = 0; i < 2; i++) {
     if (kaarten[i + 1] == kaarten[i] + 1 && kaarten[i + 2] == kaarten[i + 1] + 1) {
@@ -1537,90 +1537,27 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
 }
 
 int main(int argc, char* argv[]) {
-  /*               Samenstelling van opgegooid-array:
-   *  zuid   west   noord   oost  |  komtuit   gewonnen   punten   roem
-   *  ...                         |
-   *  ...                         |
-   * -------------------------------------------------------------------
-   *  z+n %  w+o %   z+n    w+o   |   speelt   troefkleur
-  */
-  int opgegooid[aantalslagen + 1][aantalkolommen];
-
-  /*                Verdeling van de spelersvormen:
-   * - 0: Menselijke speler, kaart moet gekozen worden
-   * - 1: Monte Carlo speler met semirandomspeler potjes
-   * - 2: Semi-random speler
-   * - 3: Monte Carlo speler met volledig random potjes
-   * - 4: Volledig random speler
-  */
-  int spelers[aantalspelers];
-
   int spelerskaarten[aantalspelers][aantalkaarten];
+  int aantalkeer = 100;
+  troefkleur = 2;
 
-  int komtuit = 0;
-  // Deze variabelen zijn alleen voor als er gegevens van een bestand worden ingelezen
-  bool output = true;
-  bool file = false;
-  bool experiment = false;
-  int troef;
-  int slag = 0;
-  int huidigespeler = 0;
-  int seed = time(NULL);
-  string filename = "";
+  cout << "Kaarten                          | MC | Punten | Troef" << endl;
+       // << "---------------------------------|----|--------|------" << endl;
 
-  parseargv(argc, argv, spelers, experiment, file, filename, seed);
-  srand(seed);
+  for (int i = 0; i < aantalkeer; i++) {
+    deelkaarten(spelerskaarten); 
+    insertionsort(spelerskaarten[0], aantalkaarten);
 
-  opgegooid[0][aantalspelers] = -1;
+    for (int j = 0; j < aantalkaarten; j++)
+      cout << Kaarten(spelerskaarten[0][j]) << ",";
 
-  for (int i = 0; i < aantalslagen + 1; i++)
-    for (int j = 0; j < aantalkolommen; j++)
-      opgegooid[i][j] = -1;
+    cout << " | ";
+    cout << montecarlospeelt(spelerskaarten[0], 0) << "  |   ";
+    cout << puntenspeelt(spelerskaarten[0]) << "    |   ";
+    cout << troefspeelt(spelerskaarten[0]) << endl;
 
-  if (!file) {
-    if (experiment) {
-      output = false;
-    }
+    // cout << "---------------------------------|----|--------|------" << endl;
 
-    opgegooid[0][aantalspelers] = komtuit;
-
-    deelkaarten(spelerskaarten);
-
-    if (!experiment)
-      printkaarten(spelerskaarten);
-
-    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output);
-  }
-  else {
-    if (!leesbestand(filename, spelers, spelerskaarten, troef, opgegooid, slag, komtuit))
-      return 0;
-
-    if (troef != -1)
-      troefkleur = troef;
-    else
-      bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output);
-
-    if (opgegooid[0][aantalspelers] != komtuit) {
-      for (int i = 0; i < aantalslagen + 1; i++) {
-        for (int j = 0; j < aantalkolommen; j++) {
-          opgegooid[i][j] = -1;      
-        }
-      }
-      
-      opgegooid[0][aantalspelers] = komtuit;
-    }
-
-    huidigespeler = opgegooid[slag][aantalspelers];
-    printkaarten(spelerskaarten);
-  }
-
-  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output);
-
-  if (!experiment)
-    printspel(opgegooid);
-  else {
-    cout << opgegooid[aantalslagen][0] << " " << opgegooid[aantalslagen][1] 
-         << " " << opgegooid[aantalslagen][aantalspelers] << endl;
   }
 
   return 0;
