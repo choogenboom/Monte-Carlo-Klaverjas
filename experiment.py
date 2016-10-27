@@ -23,6 +23,7 @@ f = open('result.txt', 'w')
 for i in range(num):
   seed = str(random.randint(0, intmax))
   rout = check_output(['./klaverjas', str('-e'), sp1, sp2, sp3, sp4, seed, str(komtuit)], shell=False)
+
   output = str(rout)[2:-3]
 
   team1 = int(output.split()[0])
