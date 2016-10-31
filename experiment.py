@@ -6,9 +6,9 @@ from math import *
 num = 16
 
 sp1 = '1'
-sp2 = '1'
+sp2 = '2'
 sp3 = '1'
-sp4 = '1'
+sp4 = '2'
 
 som1 = 0
 som2 = 0
