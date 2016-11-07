@@ -283,6 +283,7 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
 
         try {
           troef = atoi(substring.c_str());
+          troefkleur = troef;
           iss >> substring;
           speelt = atoi(substring.c_str());
           iss >> substring;
@@ -341,7 +342,13 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
           iss >> substring;
           
           try {
-            opgegooid[regels - 7][i] = atoi(substring.c_str());
+            opgegooid[regels - 7 + i][0] = atoi(substring.c_str());
+            iss >> substring;
+            opgegooid[regels - 7 + i][1] = atoi(substring.c_str());
+            iss >> substring;
+            opgegooid[regels - 7 + i][2] = atoi(substring.c_str());
+            iss >> substring;
+            opgegooid[regels - 7 + i][3] = atoi(substring.c_str());
           }
           catch (exception const & e) {
             cout << "Error in regel " << regels << ":" << i << " van bestand " << filename << endl
@@ -689,8 +696,145 @@ bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet
   return true;
 }
 
+bool checkkansdeling(int aantalgedeeld[aantalspelers - 1], int zoumoetenhebben[aantalspelers - 1]) {
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    if (aantalgedeeld[i] != zoumoetenhebben[i])
+      return false;
+  }
+
+  return true;
+}
+
+/* Verdeelt de rest van de kaarten op basis van een kansverdeling in de volgende format:
+ * 
+ *   |  S  H  K  R
+ * --|-------------
+ * 0 |  x 
+ * 1 |  y
+ * 2 |  x
+ *
+ * Waarin horizontaal de kleuren staan en verticaal de spelers, exclusief de huidige speler.
+ * x, y en z zijn kansen op een kleur, waarvan de som gelijk is aan het aantal kaarten van die 
+ * kleur nog te verdelen.
+*/
+int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, int huidigespeler,
+                      int spelerskaarten[aantalspelers][aantalkaarten], double kansverdeling[aantalspelers - 1][4]) {
+  int allekaarten[aantalkaarten * aantalspelers];
+  int maxkaart = aantalkaarten * aantalspelers;
+  int maxorig;
+  int delingen = 0;
+  int herverdeling[aantalspelers - 1][aantalkaarten * 2];
+  // int zoumoetenhebben[aantalspelers - 1];
+  int aantalgedeeld[aantalspelers] = {0, 0, 0, 0};
+  int totaalvankleur[4] = {0, 0, 0, 0};
+  int aantalgedelete = 0;
+
+  // Initieer alle kaarten
+  for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
+    allekaarten[i] = (10 * floor(i / aantalkaarten) + i % aantalkaarten);
+
+  // Initieer herverdeling
+  for (int i = 0; i < aantalspelers - 1; i++)
+    for (int j = 0; j < aantalkaarten * 2; j++)
+      herverdeling[i][j] = -1;
+
+  // Delete kaarten die al opgegooid zijn uit allekaarten
+  for (int i = 0; i < (slag + 1); i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      int k = (komtuit + j) % 4;
+      if (opgegooid[i][k] != -1) {
+        int index = (aantalkaarten * floor(opgegooid[i][k] / 10) + opgegooid[i][k] % 10);
+
+        if (allekaarten[index] != opgegooid[i][k])
+          index = zoekelement(opgegooid[i][k], allekaarten, maxkaart - aantalgedelete);
+
+        allekaarten[index] = -1;
+        aantalgedelete++;
+        wisselelement(index, allekaarten, maxkaart - (aantalgedelete));
+      }
+    }
+  }
+
+  // Delete eigen overige kaarten
+  for (int i = 0; i < aantalkaarten - slag; i++) {
+    int index = (aantalkaarten * floor(spelerskaarten[huidigespeler][i] / 10) + spelerskaarten[huidigespeler][i] % 10);
+
+    if (allekaarten[index] != spelerskaarten[huidigespeler][i])
+      index = zoekelement(spelerskaarten[huidigespeler][i], allekaarten, maxkaart - aantalgedelete);
+
+    allekaarten[index] = -1;
+    aantalgedelete++;
+    wisselelement(index, allekaarten, maxkaart - aantalgedelete);
+  }
+
+  maxkaart -= aantalgedelete;
+
+  // Initieer totaalvankleur
+  for (int i = 0; i < maxkaart; i++) {
+    if (kleurvankaart(allekaarten[i]) == 0)
+      totaalvankleur[0]++;
+    else if (kleurvankaart(allekaarten[i]) == 1)
+      totaalvankleur[1]++;
+    else if (kleurvankaart(allekaarten[i]) == 2)
+      totaalvankleur[2]++;
+    else if (kleurvankaart(allekaarten[i]) == 3)
+      totaalvankleur[3]++;
+  }
+
+  // Initieer zoumoetenhebben
+  int zoumoetenhebben[aantalspelers - 1] = {aantalkaarten - slag, aantalkaarten - slag, aantalkaarten - slag};
+  for (int i = 0; i < aantalspelers; i++)
+    if (opgegooid[slag][i] != -1)
+      zoumoetenhebben[i]--;
+
+  maxorig = maxkaart;
+  maxkaart = maxorig;
+
+  // Maak de verdeling op basis van de kansverdeling
+  while (!checkkansdeling(aantalgedeeld, zoumoetenhebben)) {
+    maxkaart = maxorig;
+    aantalgedeeld[0] = 0;
+    aantalgedeeld[1] = 0;
+    aantalgedeeld[2] = 0;
+
+    for (int i = maxkaart - 1; i >= 0; i--) {
+      int kleur = kleurvankaart(allekaarten[i]);
+      double randomint = (double)(rand() % (10 * totaalvankleur[kleur])) / 10;
+
+      if (randomint < kansverdeling[0][kleur]) {
+        // Deel kaart aan speler 0
+        herverdeling[0][aantalgedeeld[0]] = allekaarten[i];
+        aantalgedeeld[0]++;
+      }
+      else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
+        // Deel kaart aan speler 1
+        herverdeling[1][aantalgedeeld[1]] = allekaarten[i];
+        aantalgedeeld[1]++;
+      }
+      else {
+        // Deel kaart aan speler 2
+        herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
+        aantalgedeeld[2]++;
+      }
+      maxkaart--;
+    }
+    delingen++;
+  }
+
+  // De herverdeling wordt in spelerskaarten geplaatst en zo gereturned
+  for (int i = 0; i < aantalspelers; i++) {
+    if (i != huidigespeler) {
+      for (int j = 0; j < aantalkaarten; j++) {
+        spelerskaarten[i][j] = herverdeling[i][j];
+      }
+    }
+  }
+
+  return delingen;
+}
+
 int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, int huidigespeler,
-                     int spelerskaarten[aantalspelers][aantalkaarten], bool metkans) {
+                    int spelerskaarten[aantalspelers][aantalkaarten], bool metkans) {
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int aantalgedelete = 0;
@@ -732,26 +876,10 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
 
   maxkaart -= aantalgedelete;
 
-  if (metkans) {
+  if (metkans)
     berekenheeftnietmetkans(opgegooid, slag, komtuit, heeftniet);
-    // cout << "Kans: " << endl;
-    // for (int y = 0; y < 4; y++) {
-    //   for (int u = 0; u < 4; u++)  {
-    //     cout << heeftniet[y][u] << " ";
-    //   }
-    //   cout << endl;
-    // }
-  }
-  else {
+  else
     berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
-    // cout << "Zonder kans: " << endl;
-    // for (int y = 0; y < 4; y++) {
-    //   for (int u = 0; u < 4; u++)  {
-    //     cout << heeftniet[y][u] << " ";
-    //   }
-    //   cout << endl;
-    // }
-  }
 
   int aantalgedeeld[aantalspelers] = {0, 0, 0, 0};
   // Hierna verdelen we alle kaarten over de spelers:
@@ -1246,6 +1374,83 @@ int randommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
 
   return mogelijkekaarten[randomkaart];
 }
+
+int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
+                       int slag, int komtuit, int huidigespeler, int niveaurandom, bool output) {
+  int mogelijkekaarten[aantalkaarten];
+  int aantalmogelijkheden = 0;
+  int maxkaart = aantalkaarten - slag;
+  int spelers[aantalspelers] = {niveaurandom, niveaurandom, niveaurandom, niveaurandom};
+  int kopie[aantalslagen + 1][aantalkolommen];
+  int spelerskaarten[aantalspelers][aantalkaarten];
+
+  double kansverdeling[aantalspelers - 1][4] = {{1.8, 2.6, 1.5, 0.9},
+                                             {2.1, 1.9, 1.5, 1.1},
+                                             {2.1, 2.5, 3, 0}};
+
+  geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
+
+  // Als er maar 1 mogelijkheid is moeten we deze doen.
+  if (aantalmogelijkheden == 1) {
+    deleteelement(mogelijkekaarten[0], kaarten, maxkaart);
+    return mogelijkekaarten[0];
+  }
+
+  // Nu doen we aantalrandompotjes potjes voor elke mogelijke kaart
+  int beste[2] = {-1, -1}; // beste[0] = beste kaart, beste [1] = aantal punten
+  for (int i = 0; i < aantalmogelijkheden; i++) {
+    int punten = 0;
+    int delingen = 0;
+    maxkaart = aantalkaarten - slag;
+
+    for (int j = 0; j < aantalrandompotjes; j++) {
+
+      // Eerst maken we een kopie van de kaarten, leeg voor de andere spelers
+      for (int k = 0; k < aantalspelers; k++) {
+        if (k == huidigespeler) {
+          for (int l = 0; l < aantalkaarten; l++)
+            spelerskaarten[k][l] = kaarten[l];
+        }
+        else {
+          for (int l = 0; l < aantalkaarten; l++) {
+            spelerskaarten[k][l] = -1;
+          }
+        }
+      }
+
+      // Maak een kopie van de opgegooide kaarten om een random potje mee te spelen
+      for (int k = 0; k < aantalslagen + 1; k++) {
+        for (int l = 0; l < aantalkolommen; l++) {
+          kopie[k][l] = opgegooid[k][l];
+        }
+      }
+
+      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, kansverdeling);
+
+      // Doe de zet in de kopie
+      kopie[slag][huidigespeler] = mogelijkekaarten[i];
+      deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
+      // printkaarten(spelerskaarten);
+
+      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false);
+
+      punten += kopie[aantalslagen][huidigespeler];
+    }
+
+    if (output)
+      cout << "Punten voor " << Kaarten(mogelijkekaarten[i]) << " is " << punten
+           << ", in gemiddeld " << delingen / aantalrandompotjes << " delingen." << endl;
+
+    if (punten > beste[1]) {
+      beste[0] = i;
+      beste[1] = punten;
+    }
+  }
+
+  deleteelement(mogelijkekaarten[beste[0]], kaarten, maxkaart);
+  return mogelijkekaarten[beste[0]];
+}
+
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
                    int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans) {
   int mogelijkekaarten[aantalkaarten];
@@ -1389,6 +1594,12 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
           waarde = semiramdommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, output);
           if (output)
             cout << "Semirandom heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+        }
+        else if (spelers[huidigespeler] == 5) {
+          waarde = montecarlokansmove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
+          if (output) {
+            cout << "Monte Carlo (kansverdeling) heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+          }
         }
         else {
           waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, output);
@@ -1729,6 +1940,7 @@ int main(int argc, char* argv[]) {
 
     huidigespeler = opgegooid[slag][aantalspelers];
     printkaarten(spelerskaarten);
+    printspel(opgegooid);
   }
 
   speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output);
