@@ -665,9 +665,9 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
 void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit,
                           double kansverdeling[aantalspelers - 1][4], int huidigespeler,
                           double multiplier, int totaalvankleur[4]) {
-  bool info = false;
   int speelt =opgegooid[aantalslagen][aantalspelers];
   
+  // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
   if (speelt == huidigespeler || opgegooid[aantalspelers][6] == 1)
     speelt = -1;
   // Correctie doordat de kansverdeling de huidigespeler niet bevat
@@ -681,59 +681,54 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
     }
   }
 
+  bool heeftniet[4][aantalspelers];
+  berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
+
+  for (int i = 0; i < 4; i++) {
+    int k = 0;
+
+    for (int j = 0; j < aantalspelers; j ++) {
+      if (j != huidigespeler) {
+        if (heeftniet[i][j])
+          kansverdeling[k][i] = 0;
+        k++;
+      }
+    }
+  }
   // Als spelers een kleur niet mogen hebben wordt hun kans 0
-  for (int i = 0; i <= slag; i++) {
-    int komtuit = opgegooid[i][aantalspelers];
+  // for (int i = 0; i <= slag; i++) {
+  //   int komtuit = opgegooid[i][aantalspelers];
+  //   int verwerkt = 0;
 
-    for (int k = 0; k < aantalspelers; k++) {
-      int j = (komtuit + k) % 4;
-      int kaart = opgegooid[i][j];
+  //   for (int k = 0; k < aantalspelers; k++) {
+  //     int j = (komtuit + k) % 4;
+  //     int kaart = opgegooid[i][j];
 
-      if (kaart != -1 && j != huidigespeler) {
-        if (j != komtuit && kleurvankaart(opgegooid[i][komtuit]) != kleurvankaart(kaart)) {
-          // Kleur is niet bekend en deze speler kwam niet uit
-          kansverdeling[j][kleurvankaart(opgegooid[i][komtuit])] = 0;
-          if (!istroef(kaart))
-            kansverdeling[j][troefkleur] = 0;
-          info = true;
-        }
-      }
-    }
-  }
-
-  if (!info) {
-    // We hebben geen voorkennis, kansen worden eerlijk verdeeld.
-    for (int i = 0; i < 4; i++) {
-      double kansperspeler = (double)totaalvankleur[i] / (double)(aantalspelers - 1);
+  //     if (kaart != -1 && j != huidigespeler) {
         
-      if (speelt == -1 || i != troefkleur) {
-        for (int j = 0; j < aantalspelers - 1; j++) {
-          kansverdeling[j][i] = kansperspeler;
-        }
-      }
-      else {
-        // speelt != -1 && i == troefkleur --> multiplier
-        double kansmultiplier = kansperspeler * (double)multiplier;
-        double kansrest = (double)(totaalvankleur[troefkleur] - kansmultiplier) / (double)(aantalspelers - 2);
-       
-        for (int j = 0; j < aantalspelers - 1; j++) {
-          if (j == speelt)
-            kansverdeling[j][troefkleur] = kansmultiplier;
-          else
-            kansverdeling[j][troefkleur] = kansrest;
-        }
-      }
-    }
-  }
-  else {
-    // Kansen worden verdeeld over spelers die wel die kleur mogen hebben
-    for (int i = 0; i < 4; i++) {
-      int hebbenwel = 0;
-      for (int j = 0; j < aantalspelers - 1; j++) {
-        if (kansverdeling[j][i] != 0)
-          hebbenwel++;
-      }
+  //       if (j != komtuit && kleurvankaart(opgegooid[i][komtuit]) != kleurvankaart(kaart)) {
+  //         // Kleur is niet bekend en deze speler kwam niet uit
+  //         kansverdeling[j][kleurvankaart(opgegooid[i][komtuit])] = 0;
+  //         if (!istroef(kaart))
+  //           kansverdeling[j][troefkleur] = 0;
+  //         info = true;
+  //       }
+  //       else if (j == huidigespeler) {
 
+  //       }
+  //     }
+  //   }
+  // }
+
+  // Kansen worden verdeeld over spelers die wel die kleur mogen hebben
+  for (int i = 0; i < 4; i++) {
+    int hebbenwel = 0;
+    for (int j = 0; j < aantalspelers - 1; j++) {
+      if (kansverdeling[j][i] != 0)
+        hebbenwel++;
+    }
+
+    if (hebbenwel > 1) {
       double kansperspeler = (double)totaalvankleur[i] / (double)hebbenwel;
       if (speelt == -1 || i != troefkleur) {
         for (int j = 0; j < aantalspelers - 1; j++) {
@@ -742,16 +737,25 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
         }
       }
       else {
-        // Te hoog? Multiplier * kans over 2 spelers
         double kansmultiplier = kansperspeler * multiplier;
         double kansrest = (double)(totaalvankleur[troefkleur] - kansmultiplier) / (double)(hebbenwel - 1);
 
+        if (kansrest < 0) {
+          //??
+        }
+
         for (int j = 0; j < aantalspelers - 1; j++) {
-          if (j == speelt)
+          if (j == speelt && kansverdeling[j][troefkleur] != 0)
             kansverdeling[j][troefkleur] = kansmultiplier;
-          else
+          else if (kansverdeling[j][troefkleur] != 0)
             kansverdeling[j][troefkleur] = kansrest;
         }
+      }
+    }
+    else {
+      for (int j = 0; j < aantalspelers - 1; j++) {
+        if (kansverdeling[j][i] != 0)
+          kansverdeling[j][i] = totaalvankleur[i];
       }
     }
   }
@@ -909,12 +913,22 @@ cout << kansverdeling[g][h] << " ";
 }
 cout << endl;
 }
+cout << "--------------" << endl;
+for (int g = 0; g < 4; g++) {
+cout << totaalvankleur[g] << " ";
+}
+cout << endl;
 
   // Initieer zoumoetenhebben
   int zoumoetenhebben[aantalspelers - 1] = {aantalkaarten - slag, aantalkaarten - slag, aantalkaarten - slag};
-  for (int i = 0; i < aantalspelers; i++)
-    if (opgegooid[slag][i] != -1)
-      zoumoetenhebben[i]--;
+  int verwerkt = 0;
+  for (int i = 0; i < aantalspelers; i++) {
+    if (huidigespeler != i) {
+      if (opgegooid[slag][i] != -1)
+        zoumoetenhebben[verwerkt]--;
+      verwerkt++;
+    }
+  }
 
   maxorig = maxkaart;
   maxkaart = maxorig;
@@ -931,26 +945,26 @@ cout << endl;
       double randomint = (double)(rand() % (10 * totaalvankleur[kleur])) / 10;
       bool gedeeld = false;
 
-      if (randomint < kansverdeling[0][kleur] && aantalgedeeld[0] < zoumoetenhebben[0]) {
-      // if (randomint < kansverdeling[0][kleur]) {
+      // if (randomint < kansverdeling[0][kleur] && aantalgedeeld[0] < zoumoetenhebben[0]) {
+      if (randomint < kansverdeling[0][kleur]) {
         // Deel kaart aan speler 0
         herverdeling[0][aantalgedeeld[0]] = allekaarten[i];
         aantalgedeeld[0]++;
-        gedeeld = true;
+        // gedeeld = true;
       }
-      else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur] && aantalgedeeld[1] < zoumoetenhebben[1]) {
-      // else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
+      // else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur] && aantalgedeeld[1] < zoumoetenhebben[1]) {
+      else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
         // Deel kaart aan speler 1
         herverdeling[1][aantalgedeeld[1]] = allekaarten[i];
         aantalgedeeld[1]++;
-        gedeeld = true;
+        // gedeeld = true;
       }
-      else if (aantalgedeeld[2] < zoumoetenhebben[2]) {
-      // else {
+      // else if (aantalgedeeld[2] < zoumoetenhebben[2]) {
+      else {
         // Deel kaart aan speler 2
         herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
         aantalgedeeld[2]++;
-        gedeeld = true;
+        // gedeeld = true;
       }
       if (gedeeld)
         maxkaart--;
