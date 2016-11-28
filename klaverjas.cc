@@ -334,43 +334,37 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
       }
       else {
         // opgegooid initieren
-        if (regels == 7) {
-          // Komtuit in de eerste regel van opgegooid zetten
-          opgegooid[0][aantalspelers] = komtuit;
-        }
         if (opgegooidregels > aantalslagen) {
           cout << "Error in regel " << regels << " van bestand " << filename << endl
                << "Teveel regels voor opgegooid" << endl;
           return false;
         }
         
-        for (int i = 0; i < slag; i ++) {
-          string substring;
+        string substring;
+        iss >> substring;
+        
+        try {
+          opgegooid[opgegooidregels][0] = atoi(substring.c_str());
           iss >> substring;
-          
-          try {
-            opgegooid[regels - 7 + i][0] = atoi(substring.c_str());
-            iss >> substring;
-            opgegooid[regels - 7 + i][1] = atoi(substring.c_str());
-            iss >> substring;
-            opgegooid[regels - 7 + i][2] = atoi(substring.c_str());
-            iss >> substring;
-            opgegooid[regels - 7 + i][3] = atoi(substring.c_str());
-          }
-          catch (exception const & e) {
-            cout << "Error in regel " << regels << ":" << i << " van bestand " << filename << endl
-                 << "Character " << substring << " kon niet omgezet worden naar int" << endl;
-          }
+          opgegooid[opgegooidregels][1] = atoi(substring.c_str());
+          iss >> substring;
+          opgegooid[opgegooidregels][2] = atoi(substring.c_str());
+          iss >> substring;
+          opgegooid[opgegooidregels][3] = atoi(substring.c_str());
+        }
+        catch (exception const & e) {
+          cout << "Error in regel " << regels << ":"  << " van bestand " << filename << endl
+               << "Character " << substring << " kon niet omgezet worden naar int" << endl;
         }
 
         // Na de regel kunnen we winnaar & punten bepalen
         int slagwinnaar = winnaar(opgegooid[regels - 7], komtuit);
         // TODO: if-statement testen
-        if (regels - 6 < 7)
-          opgegooid[regels - 6][aantalspelers] = slagwinnaar;
-        opgegooid[regels - 7][aantalspelers + 1] = slagwinnaar;
-        opgegooid[regels - 7][aantalspelers + 2] = waardeerkaarten(opgegooid[regels - 7], aantalspelers, false);
-        opgegooid[regels - 7][aantalspelers + 3] = geefroem(opgegooid[regels - 7], false);
+        if (opgegooidregels < 7)
+          opgegooid[opgegooidregels + 1][aantalspelers] = slagwinnaar;
+        opgegooid[opgegooidregels][aantalspelers + 1] = slagwinnaar;
+        opgegooid[opgegooidregels][aantalspelers + 2] = waardeerkaarten(opgegooid[regels - 7], aantalspelers, false);
+        opgegooid[opgegooidregels][aantalspelers + 3] = geefroem(opgegooid[regels - 7], false);
 
         opgegooidregels++;
       }
@@ -2122,6 +2116,7 @@ int main(int argc, char* argv[]) {
     }
 
     huidigespeler = opgegooid[slag][aantalspelers];
+    komtuit = opgegooid[slag][aantalspelers];
     printkaarten(spelerskaarten);
     printspel(opgegooid);
   }
