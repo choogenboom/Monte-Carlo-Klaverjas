@@ -2016,7 +2016,7 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
   troefkleur = rand() % 4;
 
   // Deze waarde in opgegooid wordt gebruikt om aan te geven als een speler verplicht moet.
-  opgegooid[aantalslagen][aantalspelers + 6] = 0;
+  opgegooid[aantalslagen][aantalspelers + 2] = 0;
   while (speelt == -1) {
     int nieuwekleur = rand() % 4;
 
@@ -2032,7 +2032,7 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
         cout << "Verplicht!" << endl;
       speelt = komtuit;
       troefkleur = nieuwekleur;
-      opgegooid[aantalslagen][aantalspelers + 6] = 1;
+      opgegooid[aantalslagen][aantalspelers + 2] = 1;
     }
 
     i++;
