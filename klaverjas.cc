@@ -12,7 +12,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
-const static int aantalrandompotjes = 1;
+const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
 const static bool rotterdams = true;
 const static bool metroem = true;
@@ -61,7 +61,7 @@ ostream& operator<<(ostream& os, const Kleuren kleur) {
 
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten],
-          int slag, int huidigespeler, int komtuit, bool output);
+          int slag, int huidigespeler, int komtuit, bool output, bool experiment);
 int winnaar(int kaarten[aantalspelers], int komtuit);
 int waardeerkaarten(int kaarten[], int maxkaart, bool output);
 int geefroem(int kaarten[aantalspelers], bool output);
@@ -541,20 +541,20 @@ int winnaar(int kaarten[aantalspelers], int komtuit) {
 }
 
 void printspel(int opgegooid[aantalslagen + 1][aantalkolommen]) {
-  cout << endl << "Opgegooide kaarten:" << endl;
+  cout << endl << "Cards played:" << endl;
 
   for (int i = 0; i < aantalslagen; i++) {
     for (int j = 0; j < aantalspelers; j++) {
       cout << Kaarten(opgegooid[i][j]) << " ";
     }
-    cout << " speler " << opgegooid[i][aantalspelers + 1] << " met " << opgegooid[i][aantalspelers + 2] << " punten en "
+    cout << " player " << opgegooid[i][aantalspelers + 1] << " won with " << opgegooid[i][aantalspelers + 2] << " points and "
          << opgegooid[i][aantalspelers + 3] << " roem. "
-         << opgegooid[i][aantalspelers] << " kwam uit." << endl;
+         << opgegooid[i][aantalspelers] << " led." << endl;
   }
 
   if (opgegooid[aantalslagen][0] != -1) {
     for (int i = 0; i < aantalspelers; i++)
-      cout << "Speler " << i << ":" << opgegooid[aantalslagen][i] << endl;
+      cout << "Player " << i << ":" << opgegooid[aantalslagen][i] << endl;
   }
   cout << "---------------------------------------------" << endl;
 }
@@ -642,6 +642,63 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
   }
 }
 
+void berekenheefttroefniet(int opgegooid[aantalslagen + 1][aantalkolommen],
+                           int slag, int komtuit, bool heeftniet[aantalkaarten][aantalspelers]) {
+int huidigespeler = 0;
+  for (int i = 0; i < aantalkaarten; i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      heeftniet[i][j] = false;
+    }
+  }
+
+  for (int i = 0; i <= slag; i++) {
+    int komtuit = opgegooid[i][aantalspelers];
+
+    for (int k = 0; k < aantalspelers; k++) {
+      int j = (komtuit + k) % 4;
+      int kaart = opgegooid[i][j];
+
+      if (kaart != -1) {
+        if (j != komtuit && istroef(kaart)) {
+          // Speler heeft een troefkaart gespeeld
+          int l = komtuit;
+          while (l != huidigespeler) {
+            if (istroef(opgegooid[i][l]) && opgegooid[i][l] > kaart) {
+              // Opgegooide kaart is niet hoger dan een eerder opgegooide troef
+              int hogerzonderkleur = opgegooid[i][l] - (10 * kleurvankaart(kaart));
+              for (int n = hogerzonderkleur; n < aantalkaarten; n++) {
+                heeftniet[n][j] = true;
+              }
+            }
+            
+            l = (l + 1) % 4;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Maakt een kansverdeling over alle troefkaarten in de volgende format:
+ * 
+ *   |  7 8 V H 10 A 9 B
+ * --|-------------
+ * 0 |  x 
+ * 1 |  y
+ * 2 |  x
+ *
+ * Waarin horizontaal de troefkaarten staan en verticaal de spelers, exclusief de huidige speler.
+ * x, y en z zijn kansen op een kaart, waarvan de som gelijk is aan het aantal kaarten van die 
+ * kleur nog te verdelen. Kans is 0 als een speler een kaart niet mag hebben door ondertroeven.
+ *
+ * Speelt is de speler die speelt, of -1 als de huidige speler speelt of iemand verplicht moet.
+*/
+void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, 
+                           double troefverdeling[aantalspelers - 1][aantalkaarten], int huidigespeler,
+                           double multiplier) {
+
+}
+
 /* Maakt een kansverdeling in de volgende format:
  * 
  *   |  S  H  K  R
@@ -652,14 +709,14 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
  *
  * Waarin horizontaal de kleuren staan en verticaal de spelers, exclusief de huidige speler.
  * x, y en z zijn kansen op een kleur, waarvan de som gelijk is aan het aantal kaarten van die 
- * kleur nog te verdelen.
+ * kleur nog te verdelen. Kans is 0 als een speler die kleur niet kan hebben.
  *
  * Speelt is de speler die speelt, of -1 als de huidige speler speelt of iemand verplicht moet.
 */
 void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit,
                           double kansverdeling[aantalspelers - 1][4], int huidigespeler,
                           double multiplier, int totaalvankleur[4]) {
-  int speelt =opgegooid[aantalslagen][aantalspelers];
+  int speelt = opgegooid[aantalslagen][aantalspelers];
   
   // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
   if (speelt == huidigespeler || opgegooid[aantalspelers][6] == 1)
@@ -689,30 +746,6 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
       }
     }
   }
-  // Als spelers een kleur niet mogen hebben wordt hun kans 0
-  // for (int i = 0; i <= slag; i++) {
-  //   int komtuit = opgegooid[i][aantalspelers];
-  //   int verwerkt = 0;
-
-  //   for (int k = 0; k < aantalspelers; k++) {
-  //     int j = (komtuit + k) % 4;
-  //     int kaart = opgegooid[i][j];
-
-  //     if (kaart != -1 && j != huidigespeler) {
-        
-  //       if (j != komtuit && kleurvankaart(opgegooid[i][komtuit]) != kleurvankaart(kaart)) {
-  //         // Kleur is niet bekend en deze speler kwam niet uit
-  //         kansverdeling[j][kleurvankaart(opgegooid[i][komtuit])] = 0;
-  //         if (!istroef(kaart))
-  //           kansverdeling[j][troefkleur] = 0;
-  //         info = true;
-  //       }
-  //       else if (j == huidigespeler) {
-
-  //       }
-  //     }
-  //   }
-  // }
 
   // Kansen worden verdeeld over spelers die wel die kleur mogen hebben
   for (int i = 0; i < 4; i++) {
@@ -1205,7 +1238,7 @@ int waardeerkaarten(int kaarten[], int maxkaart, bool output) {
   }
 
   if (output)
-    cout << punten << " punten." << endl;
+    cout << punten << " points." << endl;
 
   return punten;
 }
@@ -1607,7 +1640,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
       // printkaarten(spelerskaarten);
 
-      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false);
+      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false);
 
       punten += kopie[aantalslagen][huidigespeler];
     }
@@ -1627,7 +1660,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
 }
 
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans) {
+                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, bool experiment) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
@@ -1641,6 +1674,8 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   // Als er maar 1 mogelijkheid is moeten we deze doen.
   if (aantalmogelijkheden == 1) {
     deleteelement(mogelijkekaarten[0], kaarten, maxkaart);
+    if (experiment)
+      cout << slag << " " << 0 << endl;
     return mogelijkekaarten[0];
   }
 
@@ -1688,14 +1723,17 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
       // printkaarten(spelerskaarten);
 
-      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false);
+      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false);
 
       punten += kopie[aantalslagen][huidigespeler];
     }
 
     if (output)
-      cout << "Punten voor " << Kaarten(mogelijkekaarten[i]) << " is " << punten
-           << ", in gemiddeld " << delingen / aantalrandompotjes << " delingen." << endl;
+      cout << Kaarten(mogelijkekaarten[i]) << " has " << punten
+           << " points, average of " << delingen / aantalrandompotjes << " reshufflings." << endl;
+
+    if (experiment)
+      cout << slag << " " << delingen << endl;
 
     if (punten > beste[1]) {
       beste[0] = i;
@@ -1733,7 +1771,7 @@ int usermove(int kaarten[aantalkaarten], int slag) {
 }
 
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, int komtuit, bool output) {
+          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, int komtuit, bool output, bool experiment) {
 
   while (slag < aantalslagen) {
     for (int i = 0; i < aantalspelers; i++) {
@@ -1742,44 +1780,44 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
         int waarde = -1;
 
         if (output)
-          cout << "Speler " << huidigespeler << " aan de beurt, " << komtuit << " komt uit. " << endl;
+          cout << "Player " << huidigespeler << " must play a card, " << komtuit << " has the elder hand. " << endl;
 
         if (spelers[huidigespeler] == 0)
           while (waarde == -1)
             waarde = usermove(spelerskaarten[huidigespeler], slag);
         else if (spelers[huidigespeler] == 1) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true, experiment);
           if (output) {
-            cout << "Monte Carlo heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+            cout << "Monte Carlo played " << Kaarten(waarde) << endl << endl;
           }
         }
         else if (spelers[huidigespeler] == 2) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false, experiment);
           if (output) {
-            cout << "Monte Carlo (deterministisch) heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+            cout << "Monte Carlo (deterministic) played " << Kaarten(waarde) << endl << endl;
           }
         }
         else if (spelers[huidigespeler] == 3) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false, experiment);
           if (output) {
-            cout << "Monte Carlo heeft (volledig random) " << Kaarten(waarde) << " opgegooid." << endl << endl;
+            cout << "Monte Carlo (fully random) played " << Kaarten(waarde) << endl << endl;
           }
         }
         else if (spelers[huidigespeler] == 4) {
           waarde = semiramdommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, output);
           if (output)
-            cout << "Semirandom heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+            cout << "Semirandom played " << Kaarten(waarde) << endl << endl;
         }
         else if (spelers[huidigespeler] == 5) {
           waarde = montecarlokansmove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
           if (output) {
-            cout << "Monte Carlo (kansverdeling) heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+            cout << "Monte Carlo (probability distribution) played " << Kaarten(waarde) << endl << endl;
           }
         }
         else {
           waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, output);
           if (output)
-            cout << "Random heeft " << Kaarten(waarde) << " opgegooid." << endl << endl;
+            cout << "Random played " << Kaarten(waarde)  << endl << endl;
         }
 
         opgegooid[slag][huidigespeler] = waarde;
@@ -1787,7 +1825,7 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
       }
     }
     if (output)
-      cout << "Winnaar: " << winnaar(opgegooid[slag], komtuit) << endl;
+      cout << winnaar(opgegooid[slag], komtuit) << " wins the trick" << endl;
 
     // Achter de spelers komt een nummer wie uitkwam, wie won en met hoeveel punten
     komtuit = winnaar(opgegooid[slag], komtuit);
@@ -1814,14 +1852,14 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
     // Printen wie uiteindelijk met hoeveel punten gewonnen heeft
   if (totaalwinnaar(opgegooid, false) == 0) {
     if (output)
-      cout << "0 en 2 hebben gewonnen met " << opgegooid[aantalslagen][0] << " punten!"
-           << " 1 en 3 hadden er " << opgegooid[aantalslagen][1] << endl;
+      cout << "0 and 2 have won with " << opgegooid[aantalslagen][0] << " points!"
+           << " 1 and 3 had " << opgegooid[aantalslagen][1] << endl;
     return 0;
   }
   else {
     if (output)
-      cout << "1 en 3 hebben gewonnen met " << opgegooid[aantalslagen][1] << " punten!"
-           << " 0 en 2 hadden er " << opgegooid[aantalslagen][0] << endl;
+      cout << "1 and 3 have won with " << opgegooid[aantalslagen][1] << " punten!"
+           << " 0 an 2 had " << opgegooid[aantalslagen][0] << endl;
     return 1;
   }
 }
@@ -1849,7 +1887,7 @@ bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit) {
     deelrestkaarten(opgegooid, 0, komtuit, 0, spelerskaarten, false);
     opgegooid[aantalslagen][aantalspelers] = 0;
 
-    speel(spelers, opgegooid, spelerskaarten, 0, komtuit, komtuit, false);
+    speel(spelers, opgegooid, spelerskaarten, 0, komtuit, komtuit, false, false);
     wij += opgegooid[aantalslagen][0];
     zij += opgegooid[aantalslagen][1];
   }
@@ -2033,7 +2071,7 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
   }
 
   if (output)
-    cout << speelt << " speelt op " << Kleuren(troefkleur) << endl;
+    cout << speelt << " playes on " << Kleuren(troefkleur) << endl;
 
   opgegooid[aantalslagen][aantalspelers] = speelt;
   opgegooid[aantalslagen][aantalspelers + 1] = troefkleur;
@@ -2121,14 +2159,14 @@ int main(int argc, char* argv[]) {
     printspel(opgegooid);
   }
 
-  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output);
+  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, experiment);
 
   if (!experiment)
     printspel(opgegooid);
-  else {
-    cout << opgegooid[aantalslagen][0] << " " << opgegooid[aantalslagen][1] 
-         << " " << opgegooid[aantalslagen][aantalspelers] << endl;
-  }
+  // else {
+  //   cout << opgegooid[aantalslagen][0] << " " << opgegooid[aantalslagen][1] 
+  //        << " " << opgegooid[aantalslagen][aantalspelers] << endl;
+  // }
 
   return 0;
 }
