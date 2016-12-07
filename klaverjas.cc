@@ -12,7 +12,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
-const static int aantalrandompotjes = 1;
+const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
 const static bool rotterdams = true;
 const static bool metroem = true;
@@ -616,7 +616,8 @@ void deelkaarten(int spelerskaarten[aantalspelers][aantalkaarten]) {
 }
 
 void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
-                      int slag, bool heeftniet[4][aantalspelers]) {
+                      int slag, bool heeftniet[4][aantalspelers]) 
+{
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < aantalspelers; j++) {
       heeftniet[i][j] = false;
@@ -649,8 +650,9 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
  * 0 |  x 
  * 1 |  y
  * 2 |  x
+ * 3 |  q
  *
- * Waarin x, y en z booleans zijn.
+ * Waarin x, y, z en booleans zijn.
 */
 void berekenheefttroefniet(int opgegooid[aantalslagen + 1][aantalkolommen],
                            int slag, bool heeftniet[aantalspelers][aantalkaarten]) {
@@ -709,8 +711,56 @@ void berekenheefttroefniet(int opgegooid[aantalslagen + 1][aantalkolommen],
 */
 void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, 
                            double troefverdeling[aantalspelers - 1][aantalkaarten], int huidigespeler,
-                           double multiplier) {
+                           double kansverdeling[aantalspelers - 1][4], double multiplier, int totaaltroeven) {
+  bool alopgegooid[aantalkaarten] = {false, false, false, false, false, false, false, false};
+  int speelt = opgegooid[aantalslagen][aantalspelers];
+  // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
+  if (speelt == huidigespeler || opgegooid[aantalspelers][6] == 1)
+    speelt = -1;
+  // Correctie doordat de kansverdeling de huidigespeler niet bevat
+  else if (huidigespeler < speelt)
+    speelt--;
 
+  // Initieer de kansverdeling op -1
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    for (int j = 0; j < aantalkaarten; j++) {
+      troefverdeling[i][j] = -1;
+    }
+  }
+
+  // Alle troeven die al gespeeld zijn worden op 0 gezet
+  for (int i = 0; i < aantalslagen; i++) {
+    for (int j = 0; j < aantalspelers; j++) {
+      if (istroef(opgegooid[i][j])) {
+          alopgegooid[opgegooid[i][j] - 10 * troefkleur] = true;
+      }
+    }
+  }
+
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    for (int j = 0; j < aantalkaarten - 2; j++) {
+      if (alopgegooid[j]) {
+        troefverdeling[i][j] = 0;
+      }
+      else {
+        troefverdeling[i][j] = kansverdeling[i][troefkleur] / (double) totaaltroeven;
+      }
+    }
+  }
+
+  double kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur] / (double)totaaltroeven);
+  double restkans = (totaaltroeven - kansspeelt) / 2;
+
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    if (i != speelt) {
+      troefverdeling[i][6] = restkans;
+      troefverdeling[i][7] = restkans;
+    }
+    else {
+      troefverdeling[speelt][6] = kansspeelt;
+      troefverdeling[speelt][7] = kansspeelt;
+    }
+  }
 }
 
 /* Maakt een kansverdeling in de volgende format:
@@ -729,7 +779,8 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
 */
 void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit,
                           double kansverdeling[aantalspelers - 1][4], int huidigespeler,
-                          double multiplier, int totaalvankleur[4]) {
+                          double multiplier, int totaalvankleur[4]) 
+{
   int speelt = opgegooid[aantalslagen][aantalspelers];
   
   // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
@@ -803,7 +854,8 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
 }
 
 void berekenheeftnietmetkans(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
-                             bool heeftniet[4][aantalspelers]) {
+                             bool heeftniet[4][aantalspelers]) 
+{
   // Initieer de arrays
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < aantalspelers; j++) {
@@ -850,10 +902,12 @@ bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet
                  bool heefttroefniet[aantalspelers][aantalkaarten], int maxkaart) {
   for (int i = 0; i < aantalspelers; i++) {
     for (int j = 0; j < maxkaart; j++) {
-      if (spelerskaarten[i][j] != -1 && heeftniet[kleurvankaart(spelerskaarten[i][j])][i])
-        return false;
-      if (spelerskaarten[i][j] != -1 && heefttroefniet[i][kleurvankaart(spelerskaarten[i][j])])
-        return false;
+      if (spelerskaarten[i][j] != -1) {
+        if (heeftniet[kleurvankaart(spelerskaarten[i][j])][i])
+          return false;
+        if (istroef(spelerskaarten[i][j]) && heefttroefniet[i][spelerskaarten[i][j] - 10 * troefkleur])
+          return false;
+      }
     }
   }
 
@@ -882,7 +936,8 @@ bool checkkansdeling(int aantalgedeeld[aantalspelers - 1], int zoumoetenhebben[a
  * kleur nog te verdelen.
 */
 int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, int huidigespeler,
-                      int spelerskaarten[aantalspelers][aantalkaarten], double multiplier) {
+                      int spelerskaarten[aantalspelers][aantalkaarten], double multiplier) 
+{
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int maxorig;
@@ -893,6 +948,7 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
   int totaalvankleur[4] = {0, 0, 0, 0};
   int aantalgedelete = 0;
   double kansverdeling[aantalspelers - 1][4];
+  double troefverdeling[aantalspelers - 1][aantalkaarten];
 
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
@@ -948,19 +1004,8 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
 
   // Maak kansverdeling
   berekenkansverdeling(opgegooid, slag, komtuit, kansverdeling, huidigespeler, multiplier, totaalvankleur);
+  berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, multiplier, totaalvankleur[troefkleur]);
 
-cout << "Kansverdeling: " << endl;
-for (int g = 0; g < aantalspelers - 1; g++) {
-for (int h = 0; h < 4; h++) {
-cout << kansverdeling[g][h] << " ";
-}
-cout << endl;
-}
-cout << "--------------" << endl;
-for (int g = 0; g < 4; g++) {
-cout << totaalvankleur[g] << " ";
-}
-cout << endl;
 
   // Initieer zoumoetenhebben
   int zoumoetenhebben[aantalspelers - 1] = {aantalkaarten - slag, aantalkaarten - slag, aantalkaarten - slag};
@@ -988,29 +1033,31 @@ cout << endl;
       double randomint = (double)(rand() % (10 * totaalvankleur[kleur])) / 10;
       bool gedeeld = false;
 
-      // if (randomint < kansverdeling[0][kleur] && aantalgedeeld[0] < zoumoetenhebben[0]) {
-      if (randomint < kansverdeling[0][kleur]) {
-        // Deel kaart aan speler 0
-        herverdeling[0][aantalgedeeld[0]] = allekaarten[i];
-        aantalgedeeld[0]++;
-        // gedeeld = true;
+      // Als het niet de boer of nel is kijken we alleen naar de kleur voor de kansverdeling
+      if (allekaarten[i] != 10 * troefkleur + 6 && allekaarten[i] != 10 * troefkleur + 7) {
+      // if (!istroef(allekaarten[i])) {
+        if (randomint < kansverdeling[0][kleur]) {
+          // Deel kaart aan speler 0
+          herverdeling[0][aantalgedeeld[0]] = allekaarten[i];
+          aantalgedeeld[0]++;
+        }
+        else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
+          // Deel kaart aan speler 1
+          herverdeling[1][aantalgedeeld[1]] = allekaarten[i];
+          aantalgedeeld[1]++;
+        }
+        else {
+          // Deel kaart aan speler 2
+          herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
+          aantalgedeeld[2]++;
+        }
+        if (gedeeld)
+          maxkaart--;
       }
-      // else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur] && aantalgedeeld[1] < zoumoetenhebben[1]) {
-      else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
-        // Deel kaart aan speler 1
-        herverdeling[1][aantalgedeeld[1]] = allekaarten[i];
-        aantalgedeeld[1]++;
-        // gedeeld = true;
-      }
-      // else if (aantalgedeeld[2] < zoumoetenhebben[2]) {
       else {
-        // Deel kaart aan speler 2
-        herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
-        aantalgedeeld[2]++;
-        // gedeeld = true;
+        // De huidige kaart is de boer of de nel, kijk naar de troefverdeling
+
       }
-      if (gedeeld)
-        maxkaart--;
     }
     // Kijken of een kleine wisseling het wel goed maakt?
     delingen++;
@@ -1029,7 +1076,8 @@ cout << endl;
 }
 
 int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, int huidigespeler,
-                    int spelerskaarten[aantalspelers][aantalkaarten], bool metkans) {
+                    int spelerskaarten[aantalspelers][aantalkaarten], bool metkans) 
+{
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int aantalgedelete = 0;
@@ -1078,14 +1126,6 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
     berekenheeftniet(opgegooid, slag, heeftniet);
 
   berekenheefttroefniet(opgegooid, slag, heefttroefniet);
-
-cout << "7 8 V H T A 9 B" << endl;
-for (int g = 0; g < aantalspelers; g++) {
-for (int h = 0; h < aantalkaarten; h++) {
-cout << heefttroefniet[g][h] << " ";
-}
-cout << endl;
-}
 
   int aantalgedeeld[aantalspelers] = {0, 0, 0, 0};
   // Hierna verdelen we alle kaarten over de spelers:
