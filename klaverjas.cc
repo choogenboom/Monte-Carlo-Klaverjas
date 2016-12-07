@@ -12,7 +12,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
-const static int aantalrandompotjes = 1000;
+const static int aantalrandompotjes = 1;
 const static int maximumdelingen = 1000;
 const static bool rotterdams = true;
 const static bool metroem = true;
@@ -616,7 +616,7 @@ void deelkaarten(int spelerskaarten[aantalspelers][aantalkaarten]) {
 }
 
 void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
-                      int slag, int komtuit, bool heeftniet[4][aantalspelers]) {
+                      int slag, bool heeftniet[4][aantalspelers]) {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < aantalspelers; j++) {
       heeftniet[i][j] = false;
@@ -642,36 +642,50 @@ void berekenheeftniet(int opgegooid[aantalslagen + 1][aantalkolommen],
   }
 }
 
+/* Overzicht voor welke speler welke troefkaarten niet mogen hebben in de volgende format:
+ * 
+ *   |  7 8 V H 10 A 9 B
+ * --|-------------
+ * 0 |  x 
+ * 1 |  y
+ * 2 |  x
+ *
+ * Waarin x, y en z booleans zijn.
+*/
 void berekenheefttroefniet(int opgegooid[aantalslagen + 1][aantalkolommen],
-                           int slag, int komtuit, bool heeftniet[aantalkaarten][aantalspelers]) {
-int huidigespeler = 0;
-  for (int i = 0; i < aantalkaarten; i++) {
-    for (int j = 0; j < aantalspelers; j++) {
-      heeftniet[i][j] = false;
+                           int slag, bool heeftniet[aantalspelers][aantalkaarten]) {
+  int hoogstetroef = -1;
+    for (int i = 0; i < aantalspelers; i++) {
+      for (int j = 0; j < aantalkaarten; j++) {
+        heeftniet[i][j] = false;
+      }
     }
-  }
 
   for (int i = 0; i <= slag; i++) {
     int komtuit = opgegooid[i][aantalspelers];
 
-    for (int k = 0; k < aantalspelers; k++) {
-      int j = (komtuit + k) % 4;
+    for (int j = 0; j < aantalspelers; j++) {
       int kaart = opgegooid[i][j];
 
-      if (kaart != -1) {
-        if (j != komtuit && istroef(kaart)) {
-          // Speler heeft een troefkaart gespeeld
-          int l = komtuit;
-          while (l != huidigespeler) {
-            if (istroef(opgegooid[i][l]) && opgegooid[i][l] > kaart) {
-              // Opgegooide kaart is niet hoger dan een eerder opgegooide troef
-              int hogerzonderkleur = opgegooid[i][l] - (10 * kleurvankaart(kaart));
-              for (int n = hogerzonderkleur; n < aantalkaarten; n++) {
-                heeftniet[n][j] = true;
-              }
-            }
-            
-            l = (l + 1) % 4;
+      if (istroef(kaart)) {
+        int k = komtuit;
+
+        if (istroef(opgegooid[i][k]))
+          hoogstetroef = opgegooid[i][k];
+
+        // Zoek de hoogst eerder opgegooide troef
+        while (k != j) {
+          if (istroef(opgegooid[i][k])) {
+            if (opgegooid[i][k] > hoogstetroef)
+              hoogstetroef = opgegooid[i][k];
+          }
+          k = (k + 1) % aantalspelers;
+        }
+
+        if (kaart < hoogstetroef) {
+          int zonderkleur = hoogstetroef - (10 * kleurvankaart(hoogstetroef));
+          for (int n = zonderkleur + 1; n < aantalkaarten; n++) {
+            heeftniet[j][n] = true;
           }
         }
       }
@@ -733,7 +747,7 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
   }
 
   bool heeftniet[4][aantalspelers];
-  berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
+  berekenheeftniet(opgegooid, slag, heeftniet);
 
   for (int i = 0; i < 4; i++) {
     int k = 0;
@@ -789,7 +803,7 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
 }
 
 void berekenheeftnietmetkans(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
-                             int komtuit, bool heeftniet[4][aantalspelers]) {
+                             bool heeftniet[4][aantalspelers]) {
   // Initieer de arrays
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < aantalspelers; j++) {
@@ -832,12 +846,14 @@ void berekenheeftnietmetkans(int opgegooid[aantalslagen + 1][aantalkolommen], in
   }
 }
 
-bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet[4][aantalspelers], int maxkaart) {
+bool checkdeling(int spelerskaarten[aantalspelers][aantalslagen], bool heeftniet[4][aantalspelers], 
+                 bool heefttroefniet[aantalspelers][aantalkaarten], int maxkaart) {
   for (int i = 0; i < aantalspelers; i++) {
     for (int j = 0; j < maxkaart; j++) {
-      if (spelerskaarten[i][j] != -1 && heeftniet[kleurvankaart(spelerskaarten[i][j])][i]) {
+      if (spelerskaarten[i][j] != -1 && heeftniet[kleurvankaart(spelerskaarten[i][j])][i])
         return false;
-      }
+      if (spelerskaarten[i][j] != -1 && heefttroefniet[i][kleurvankaart(spelerskaarten[i][j])])
+        return false;
     }
   }
 
@@ -1018,6 +1034,7 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
   int maxkaart = aantalkaarten * aantalspelers;
   int aantalgedelete = 0;
   bool heeftniet[4][aantalspelers];
+  bool heefttroefniet[aantalspelers][aantalkaarten];
 
   // Initieer alle kaarten
   for (int i = 0; i < aantalkaarten * aantalspelers ; i++)
@@ -1056,9 +1073,19 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
   maxkaart -= aantalgedelete;
 
   if (metkans)
-    berekenheeftnietmetkans(opgegooid, slag, komtuit, heeftniet);
+    berekenheeftnietmetkans(opgegooid, slag, heeftniet);
   else
-    berekenheeftniet(opgegooid, slag, komtuit, heeftniet);
+    berekenheeftniet(opgegooid, slag, heeftniet);
+
+  berekenheefttroefniet(opgegooid, slag, heefttroefniet);
+
+cout << "7 8 V H T A 9 B" << endl;
+for (int g = 0; g < aantalspelers; g++) {
+for (int h = 0; h < aantalkaarten; h++) {
+cout << heefttroefniet[g][h] << " ";
+}
+cout << endl;
+}
 
   int aantalgedeeld[aantalspelers] = {0, 0, 0, 0};
   // Hierna verdelen we alle kaarten over de spelers:
@@ -1128,7 +1155,7 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
       i++;
     }
 
-    goededeling = checkdeling(spelerskaarten, heeftniet, aantalkaarten - slag);
+    goededeling = checkdeling(spelerskaarten, heeftniet, heefttroefniet, aantalkaarten - slag);
     aantaldelingen++;
 
     // Als we in een onmogelijke deling zitten door de kans, ga terug naar normale deling
