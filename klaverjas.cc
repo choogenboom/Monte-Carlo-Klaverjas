@@ -1004,8 +1004,15 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
 
   // Maak kansverdeling
   berekenkansverdeling(opgegooid, slag, komtuit, kansverdeling, huidigespeler, multiplier, totaalvankleur);
-  berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, multiplier, totaalvankleur[troefkleur]);
+  berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, 1, totaalvankleur[troefkleur]);
 
+// cout << "7 8 V H T A 9 B" << endl;
+// for (int q = 0; q < aantalspelers - 1; q++) {
+// for (int w = 0; w < aantalkaarten; w++) {
+// cout << troefverdeling[q][w] << " ";
+// }
+// cout << endl;
+// }
 
   // Initieer zoumoetenhebben
   int zoumoetenhebben[aantalspelers - 1] = {aantalkaarten - slag, aantalkaarten - slag, aantalkaarten - slag};
