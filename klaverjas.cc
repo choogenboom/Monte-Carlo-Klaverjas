@@ -378,7 +378,7 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
     for (int j = 0; j < aantalspelers; j++) {
       if (opgegooid[i][j] != -1) {
         int index = zoekelement(opgegooid[i][j], spelerskaarten[j], aantalkaarten - i);
-
+        
         spelerskaarten[j][index] = -1;
         wisselelement(index, spelerskaarten[j], aantalkaarten - i - 1);
       }
@@ -667,7 +667,7 @@ void berekenheefttroefniet(int opgegooid[aantalslagen + 1][aantalkolommen],
 
   for (int i = 0; i <= slag; i++) {
     int komtuit = opgegooid[i][aantalspelers];
-
+    hoogstetroef = -1;
     for (int j = 0; j < aantalspelers; j++) {
       int kaart = opgegooid[i][j];
 
