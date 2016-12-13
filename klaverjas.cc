@@ -14,6 +14,7 @@ const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
 const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
+const static double maximumkans = 0.99;
 const static bool rotterdams = true;
 const static bool metroem = true;
 const static bool tienennietweggooien = true;
@@ -785,15 +786,17 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur] / (double)totaaltroeven);
 
     if (kansspeelt > 1) {
-      cout << "ERROR: Kans groter dan 1." << endl;
-      exit(1);
+      // Kans groter dan 1, maak gelijk aan maximumkans
+      kansspeelt = maximumkans;
+      restkans = (1 - kansspeelt) / (hebbenwel - 1);
     }
 
 
     if (hebbenwel > 1)
       restkans = (1 - kansspeelt) / (hebbenwel - 1);
     else {
-      cout << "?" << endl << endl;
+      // Geen troeven meer in het spel, exit functie
+      return;
     }
 
   }
@@ -901,12 +904,13 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
         double kansrest = (double)(totaalvankleur[troefkleur] - kansmultiplier) / (double)(hebbenwel - 1);
 
         if (kansmultiplier > totaalvankleur[troefkleur]) {
-          cout << "ERROR: Kans groter dan aantal troeven." << endl;
-          exit(1);
+          // Kans groter dan 1, maak gelijk aan maximumkans
+          kansmultiplier = maximumkans;
+          kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
         }
         if (kansrest < 0) {
-          cout << "ERROR: Kans rest kleiner dan 0." << endl;
-          exit(1);
+          kansmultiplier = maximumkans;
+          kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
         }
 
         for (int j = 0; j < aantalspelers - 1; j++) {
@@ -1188,6 +1192,7 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
   int allekaarten[aantalkaarten * aantalspelers];
   int maxkaart = aantalkaarten * aantalspelers;
   int aantalgedelete = 0;
+  bool foutedeling = false;
   bool heeftniet[4][aantalspelers];
   bool heefttroefniet[aantalspelers][aantalkaarten];
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
@@ -1275,20 +1280,34 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
 
     for (int i = 1; i <= aantalspelers - 2; i++) {
       for (int j = aantalgedeeld[(huidigespeler + i) % 4]; j < aantalkaarten - slag - 1; j++) {
-          int randomkaart = rand() % (maxkaart);
-          spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
-          wisselelement(randomkaart, allekaarten, maxkaart - 1);
-          maxkaart--;
+          // Door de kansdelingen kan maxkaart 0 worden, en komt er een FPE
+          if (maxkaart > 0) {
+            int randomkaart = rand() % (maxkaart);
+            spelerskaarten[(huidigespeler + i) % 4][j] = allekaarten[randomkaart];
+            wisselelement(randomkaart, allekaarten, maxkaart - 1);
+            maxkaart--;
+          }
+          else {
+            foutedeling = true;
+            break;
+          }
       }
     }
 
     // Deel speler links van huidigespeler (+3 %4) de rest van de kaarten
     for (int i = aantalgedeeld[(huidigespeler + 3) % 4]; i < aantalkaarten - slag - 1; i++) {
+      // Door de kansdelingen kan maxkaart 0 worden, en komt er een FPE
+      if (maxkaart > 0) {
         int randomkaart = rand() % (aantalkaarten - slag - i);
 
         spelerskaarten[(huidigespeler + 3) % 4][i] = allekaarten[randomkaart];
         wisselelement(randomkaart, allekaarten, maxkaart - 1);
         maxkaart--;
+      }
+      else {
+        foutedeling = true;
+        break;
+      }
     }
 
     // Overige kaarten verdelen over spelers die nog niet opgegooid hebben
@@ -1307,7 +1326,7 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
     aantaldelingen++;
 
     // Als we in een onmogelijke deling zitten door de kans, ga terug naar normale deling
-    if (aantaldelingen > maximumdelingen && metkans) {
+    if ((aantaldelingen > maximumdelingen && metkans) || foutedeling) {
       // if (output)
       //   cout << "Onmogelijke deling..." << endl;
       // Maak spelerskaarten weer leeg...
@@ -1810,7 +1829,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
         }
       }
 
-      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.5, 1.1);
+      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.0, 1.0);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
@@ -1846,20 +1865,22 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int kopie[aantalslagen + 1][aantalkolommen];
   int spelerskaarten[aantalspelers][aantalkaarten];
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
-  float kans = 0.5;
+  float kans;
 
   geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, troefkleur, mogelijkekaarten, aantalmogelijkheden);
 
   // Als er maar 1 mogelijkheid is moeten we deze doen.
   if (aantalmogelijkheden == 1) {
     deleteelement(mogelijkekaarten[0], kaarten, maxkaart);
-    if (experiment)
-      cout << slag << " " << 0 << endl;
+    // if (experiment)
+    //   cout << slag << " " << 0 << endl;
     return mogelijkekaarten[0];
   }
 
-  if (metkans)
-    kans = 1;
+  if (!metkans)
+    kans = 0;
+  else
+    kans = 0.5;
 
   // Nu doen we aantalrandompotjes potjes voor elke mogelijke kaart
   int beste[2] = {-1, -1}; // beste[0] = beste kaart, beste [1] = aantal punten
@@ -1893,9 +1914,9 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       // Een aantal (int kans) van de keren gebruiken we 'geschatte' informatie, dus 
       // of een speler een kaart niet heeft omdat hij roem bijgelegd heeft.
       if ((double) rand() / (RAND_MAX) > kans)
-        delingen += deelrestkaarten(kopie, slag, komtuit, huidigespeler, spelerskaarten, true);
-      else
         delingen += deelrestkaarten(kopie, slag, komtuit, huidigespeler, spelerskaarten, false);
+      else
+        delingen += deelrestkaarten(kopie, slag, komtuit, huidigespeler, spelerskaarten, true);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
@@ -1911,8 +1932,8 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       cout << Kaarten(mogelijkekaarten[i]) << " has " << punten
            << " points, average of " << delingen / aantalrandompotjes << " reshufflings." << endl;
 
-    if (experiment)
-      cout << slag << " " << delingen << endl;
+    // if (experiment)
+    //   cout << slag << " " << delingen << endl;
 
     if (punten > beste[1]) {
       beste[0] = i;
@@ -2345,10 +2366,10 @@ int main(int argc, char* argv[]) {
 
   if (!experiment)
     printspel(opgegooid);
-  // else {
-  //   cout << opgegooid[aantalslagen][0] << " " << opgegooid[aantalslagen][1] 
-  //        << " " << opgegooid[aantalslagen][aantalspelers] << endl;
-  // }
+  else {
+    cout << opgegooid[aantalslagen][0] << " " << opgegooid[aantalslagen][1] 
+         << " " << opgegooid[aantalslagen][aantalspelers] << endl;
+  }
 
   return 0;
 }
