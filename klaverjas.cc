@@ -378,7 +378,7 @@ bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten
     for (int j = 0; j < aantalspelers; j++) {
       if (opgegooid[i][j] != -1) {
         int index = zoekelement(opgegooid[i][j], spelerskaarten[j], aantalkaarten - i);
-        
+
         spelerskaarten[j][index] = -1;
         wisselelement(index, spelerskaarten[j], aantalkaarten - i - 1);
       }
@@ -717,6 +717,9 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
   bool alopgegooid[aantalkaarten] = {false, false, false, false, false, false, false, false};
   int speelt = opgegooid[aantalslagen][aantalspelers];
   int troefkleur = opgegooid[aantalkaarten][aantalspelers + 1];
+  int hebbenwel = 0;
+  double kansspeelt;
+  double restkans;
 
   // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
   if (speelt == huidigespeler || opgegooid[aantalspelers][6] == 1)
@@ -732,6 +735,26 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     }
   }
 
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    if (kansverdeling[i][troefkleur] != 0)
+      hebbenwel++; 
+  }
+
+  // Kopieer heefttroefniet
+  bool heefttroefniet[aantalspelers][aantalkaarten];
+  berekenheefttroefniet(opgegooid, slag, heefttroefniet);
+  
+  int temp = 0;
+  for (int i = 0; i < aantalspelers; i++) {
+    if (i != huidigespeler) {
+      for (int j = 0; j < aantalkaarten; j++) {
+        if (heefttroefniet[i][j])
+          troefverdeling[temp][j] = 0;
+      }
+      temp++;
+    }
+  }
+
   // Alle troeven die al gespeeld zijn worden op 0 gezet
   for (int i = 0; i < aantalslagen; i++) {
     for (int j = 0; j < aantalspelers; j++) {
@@ -741,28 +764,68 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     }
   }
 
+  // Kopieer kansen uit kansverdeling in troefverdeling
   for (int i = 0; i < aantalspelers - 1; i++) {
     for (int j = 0; j < aantalkaarten - 2; j++) {
-      if (alopgegooid[j]) {
-        troefverdeling[i][j] = 0;
-      }
-      else {
-        troefverdeling[i][j] = kansverdeling[i][troefkleur] / (double) totaaltroeven;
+      if (troefverdeling[i][j] != 0) {
+        if (alopgegooid[j] || kansverdeling[i][troefkleur] == 0) {
+          troefverdeling[i][j] = 0;
+        }
+        else if (troefverdeling[i][j] != 0) {
+          troefverdeling[i][j] = kansverdeling[i][troefkleur] / (double) totaaltroeven;
+        }
       }
     }
   }
 
-  double kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur] / (double)totaaltroeven);
-  double restkans = (totaaltroeven - kansspeelt) / 2;
 
-  for (int i = 0; i < aantalspelers - 1; i++) {
-    if (i != speelt) {
+  // We gebruiken alleen deze extra informatie als de speler niet zelf speelt of iemand
+  // verplicht moet. 
+  if (speelt != -1) {
+    kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur] / (double)totaaltroeven);
+
+    if (kansspeelt > 1) {
+      cout << "ERROR: Kans groter dan 1." << endl;
+      exit(1);
+    }
+
+
+    if (hebbenwel > 1)
+      restkans = (1 - kansspeelt) / (hebbenwel - 1);
+    else {
+      cout << "?" << endl << endl;
+    }
+
+  }
+  else {
+    // We nemen de kans van speler 0 uit de kansverdeling aangezien (zonder informatie)
+    // alle kansen gelijk zijn
+    kansspeelt = kansverdeling[0][troefkleur] / (double) totaaltroeven;
+    restkans = kansspeelt;
+  }
+
+  // Troefkansen zijn verdeeld, nu alleen boer en nel nog.
+  if (speelt == -1) {
+    for (int i = 0; i < aantalspelers - 1; i++) {
       troefverdeling[i][6] = restkans;
       troefverdeling[i][7] = restkans;
     }
-    else {
-      troefverdeling[speelt][6] = kansspeelt;
-      troefverdeling[speelt][7] = kansspeelt;
+  }
+  else {
+    kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur]) / (double) totaaltroeven;
+    restkans = (1 - kansspeelt) / (hebbenwel - 1);
+    
+    for (int i = 0; i < aantalspelers - 1; i++) {
+      if (troefverdeling[i][6] != 0) {
+        if (i == speelt) {
+          troefverdeling[i][6] = kansspeelt;
+          troefverdeling[i][7] = kansspeelt;
+        }
+        else {
+          troefverdeling[i][6] = restkans;
+          troefverdeling[i][7] = restkans;
+        }
+      }
     }
   }
 }
@@ -837,8 +900,13 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
         double kansmultiplier = kansperspeler * multiplier;
         double kansrest = (double)(totaalvankleur[troefkleur] - kansmultiplier) / (double)(hebbenwel - 1);
 
+        if (kansmultiplier > totaalvankleur[troefkleur]) {
+          cout << "ERROR: Kans groter dan aantal troeven." << endl;
+          exit(1);
+        }
         if (kansrest < 0) {
-          //??
+          cout << "ERROR: Kans rest kleiner dan 0." << endl;
+          exit(1);
         }
 
         for (int j = 0; j < aantalspelers - 1; j++) {
@@ -942,7 +1010,7 @@ bool checkkansdeling(int aantalgedeeld[aantalspelers - 1], int zoumoetenhebben[a
  * kleur nog te verdelen.
 */
 int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, int huidigespeler,
-                      int spelerskaarten[aantalspelers][aantalkaarten], double multiplier) 
+                      int spelerskaarten[aantalspelers][aantalkaarten], double multiplier, double multiplier2) 
 {
   int allekaarten[aantalkaarten * aantalspelers];
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
@@ -1011,7 +1079,7 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
 
   // Maak kansverdeling
   berekenkansverdeling(opgegooid, slag, komtuit, kansverdeling, huidigespeler, multiplier, totaalvankleur);
-  berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, 1, totaalvankleur[troefkleur]);
+  berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, multiplier2, totaalvankleur[troefkleur]);
 
 // cout << "7 8 V H T A 9 B" << endl;
 // for (int q = 0; q < aantalspelers - 1; q++) {
@@ -1033,7 +1101,6 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
   }
 
   maxorig = maxkaart;
-  maxkaart = maxorig;
 
   // Maak de verdeling op basis van de kansverdeling
   while (!checkkansdeling(aantalgedeeld, zoumoetenhebben)) {
@@ -1044,18 +1111,17 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
 
     for (int i = maxkaart - 1; i >= 0; i--) {
       int kleur = kleurvankaart(allekaarten[i]);
-      double randomint = (double)(rand() % (10 * totaalvankleur[kleur])) / 10;
-      bool gedeeld = false;
+      // bool gedeeld = false;
 
       // Als het niet de boer of nel is kijken we alleen naar de kleur voor de kansverdeling
-      if (allekaarten[i] != 10 * troefkleur + 6 && allekaarten[i] != 10 * troefkleur + 7) {
-      // if (!istroef(allekaarten[i])) {
-        if (randomint < kansverdeling[0][kleur]) {
+      if (!istroef(allekaarten[i], troefkleur)) {
+        double randomnum = (double)(rand() % (10 * totaalvankleur[kleur])) / 10;
+        if (randomnum < kansverdeling[0][kleur]) {
           // Deel kaart aan speler 0
           herverdeling[0][aantalgedeeld[0]] = allekaarten[i];
           aantalgedeeld[0]++;
         }
-        else if (randomint < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
+        else if (randomnum < kansverdeling[1][kleur] + kansverdeling[0][kleur]) {
           // Deel kaart aan speler 1
           herverdeling[1][aantalgedeeld[1]] = allekaarten[i];
           aantalgedeeld[1]++;
@@ -1065,24 +1131,51 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
           herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
           aantalgedeeld[2]++;
         }
-        if (gedeeld)
-          maxkaart--;
+        // if (gedeeld)
+        //   maxkaart--;
       }
       else {
-        // De huidige kaart is de boer of de nel, kijk naar de troefverdeling
+        // De huidige kaart is troef, kijk naar de troefverdeling
+        double randomnum = (double)(rand() % 100) / 100;
+        int kaart = allekaarten[i] - 10 * kleurvankaart(allekaarten[i]);
 
+        if (randomnum < troefverdeling[0][kaart]) {
+          // Deel kaart aan speler 0
+          herverdeling[0][aantalgedeeld[0]] = allekaarten[i];
+          aantalgedeeld[0]++;
+        }
+        else if (randomnum < troefverdeling[1][kaart] + troefverdeling[0][kaart]) {
+          // Deel kaart aan speler 1
+          herverdeling[1][aantalgedeeld[1]] = allekaarten[i];
+          aantalgedeeld[1]++;
+        }
+        else {
+          // Deel kaart aan speler 2
+          herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
+          aantalgedeeld[2]++;
+        }
       }
+
+      // Als een van de spelers het maximum heeft bereikt beginnen we opnieuw
+      if (aantalgedeeld[0] > aantalkaarten || aantalgedeeld[1] > aantalkaarten || aantalgedeeld[2] > aantalkaarten)
+        break;
+
+      maxkaart--;
     }
     // Kijken of een kleine wisseling het wel goed maakt?
     delingen++;
   }
 
+
+
   // De herverdeling wordt in spelerskaarten geplaatst en zo gereturned
+  int k = 0;
   for (int i = 0; i < aantalspelers; i++) {
     if (i != huidigespeler) {
-      for (int j = 0; j < aantalkaarten; j++) {
-        spelerskaarten[i][j] = herverdeling[i][j];
+      for (int j = 0; j < aantalgedeeld[k]; j++) {
+        spelerskaarten[i][j] = herverdeling[k][j];
       }
+      k++;
     }
   }
 
@@ -1717,13 +1810,14 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
         }
       }
 
-      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.5);
+      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.5, 1.1);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
-      // printkaarten(spelerskaarten);
-
+// cout << endl;
+//       printkaarten(spelerskaarten);
+// cout << endl;
       speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false);
 
       punten += kopie[aantalslagen][huidigespeler];
@@ -2211,7 +2305,7 @@ int main(int argc, char* argv[]) {
 
   if (!file) {
     if (experiment) {
-      // output = false;
+      output = false;
     }
 
     opgegooid[0][aantalspelers] = komtuit;
