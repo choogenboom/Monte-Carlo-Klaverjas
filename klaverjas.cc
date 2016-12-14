@@ -728,6 +728,9 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
   // Correctie doordat de kansverdeling de huidigespeler niet bevat
   else if (huidigespeler < speelt)
     speelt--;
+  // Als de speler die speelt geen troeven heeft, doe alsof niemand speelt.
+  if (kansverdeling[speelt][troefkleur] == 0)
+    speelt = -1;
 
   // Initieer de kansverdeling op -1
   for (int i = 0; i < aantalspelers - 1; i++) {
@@ -738,7 +741,7 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
 
   for (int i = 0; i < aantalspelers - 1; i++) {
     if (kansverdeling[i][troefkleur] != 0)
-      hebbenwel++; 
+      hebbenwel++;
   }
   
   if (hebbenwel == 1) {
