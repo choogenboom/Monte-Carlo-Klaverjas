@@ -765,6 +765,47 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     }
   }
 
+  // We gebruiken alleen deze extra informatie als de speler niet zelf speelt of iemand
+  // verplicht moet. 
+  if (speelt != -1) {
+    kansspeelt = ((double) kansverdeling[speelt][troefkleur] / (double)totaaltroeven);
+
+    // Kans groter dan 1, maak gelijk aan maximumkans
+    if (kansspeelt > 1) 
+      kansspeelt = maximumkans;
+
+    if (hebbenwel > 1)
+      restkans = (1 - kansspeelt) / (hebbenwel - 1);
+    else if (hebbenwel == 1) {
+      // Nog maar 1 speler heeft troeven, hij krijgt alle kansen.
+      int heeftwel = -1;
+      for (int i = 0; i < aantalspelers - 1; i++)
+        if (kansverdeling[i][troefkleur] != 0)
+          heeftwel = i;
+
+      for (int i = 0; i < aantalspelers - 1; i++) {
+        for (int j = 0; j < aantalkaarten; j++) {
+          if (i == heeftwel)
+            troefverdeling[heeftwel][j] = 1;
+          else 
+            troefverdeling[i][j] = 0;
+        }
+      }
+      
+      return;
+    }
+    // Geen troeven meer in het spel, exit functie
+    else
+      return; 
+
+  }
+  else {
+    // We nemen de kans van speler 0 uit de kansverdeling aangezien (zonder informatie)
+    // alle kansen gelijk zijn
+    kansspeelt = kansverdeling[0][troefkleur] / (double) totaaltroeven;
+    restkans = kansspeelt;
+  }
+
   // Kopieer kansen uit kansverdeling in troefverdeling
   for (int i = 0; i < aantalspelers - 1; i++) {
     for (int j = 0; j < aantalkaarten - 2; j++) {
@@ -773,38 +814,13 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
           troefverdeling[i][j] = 0;
         }
         else if (troefverdeling[i][j] != 0) {
-          troefverdeling[i][j] = kansverdeling[i][troefkleur] / (double) totaaltroeven;
+          if (i == speelt)
+            troefverdeling[i][j] = kansspeelt;
+          else
+            troefverdeling[i][j] = restkans;
         }
       }
     }
-  }
-
-
-  // We gebruiken alleen deze extra informatie als de speler niet zelf speelt of iemand
-  // verplicht moet. 
-  if (speelt != -1) {
-    kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur] / (double)totaaltroeven);
-
-    if (kansspeelt > 1) {
-      // Kans groter dan 1, maak gelijk aan maximumkans
-      kansspeelt = maximumkans;
-      restkans = (1 - kansspeelt) / (hebbenwel - 1);
-    }
-
-
-    if (hebbenwel > 1)
-      restkans = (1 - kansspeelt) / (hebbenwel - 1);
-    else {
-      // Geen troeven meer in het spel, exit functie
-      return;
-    }
-
-  }
-  else {
-    // We nemen de kans van speler 0 uit de kansverdeling aangezien (zonder informatie)
-    // alle kansen gelijk zijn
-    kansspeelt = kansverdeling[0][troefkleur] / (double) totaaltroeven;
-    restkans = kansspeelt;
   }
 
   // Troefkansen zijn verdeeld, nu alleen boer en nel nog.
@@ -815,9 +831,13 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     }
   }
   else {
-    kansspeelt = multiplier * ((double) kansverdeling[speelt][troefkleur]) / (double) totaaltroeven;
+    kansspeelt = multiplier * kansspeelt;
+    // Kans groter dan 1, maak gelijk aan maximumkans
+    if (kansspeelt > 1) 
+      kansspeelt = maximumkans;
+    // We weten dat hebbenwel > 1, anders was het algorithme al eerder gestopt.
     restkans = (1 - kansspeelt) / (hebbenwel - 1);
-    
+
     for (int i = 0; i < aantalspelers - 1; i++) {
       if (troefverdeling[i][6] != 0) {
         if (i == speelt) {
@@ -1085,14 +1105,6 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
   berekenkansverdeling(opgegooid, slag, komtuit, kansverdeling, huidigespeler, multiplier, totaalvankleur);
   berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, multiplier2, totaalvankleur[troefkleur]);
 
-// cout << "7 8 V H T A 9 B" << endl;
-// for (int q = 0; q < aantalspelers - 1; q++) {
-// for (int w = 0; w < aantalkaarten; w++) {
-// cout << troefverdeling[q][w] << " ";
-// }
-// cout << endl;
-// }
-
   // Initieer zoumoetenhebben
   int zoumoetenhebben[aantalspelers - 1] = {aantalkaarten - slag, aantalkaarten - slag, aantalkaarten - slag};
   int verwerkt = 0;
@@ -1112,6 +1124,12 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
     aantalgedeeld[0] = 0;
     aantalgedeeld[1] = 0;
     aantalgedeeld[2] = 0;
+
+    bool debug = false;
+    if (debug) {
+      berekenkansverdeling(opgegooid, slag, komtuit, kansverdeling, huidigespeler, multiplier, totaalvankleur);
+      berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, multiplier2, totaalvankleur[troefkleur]);
+    }
 
     for (int i = maxkaart - 1; i >= 0; i--) {
       int kleur = kleurvankaart(allekaarten[i]);
@@ -1276,6 +1294,16 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
   // Daarna delen we de rest van de kaarten
   bool goededeling = false;
   while (!goededeling) {
+    bool debug = false;
+    if (debug) {
+      if (metkans)
+        berekenheeftnietmetkans(opgegooid, slag, heeftniet);
+      else
+        berekenheeftniet(opgegooid, slag, heeftniet);
+
+      berekenheefttroefniet(opgegooid, slag, heefttroefniet);
+    }
+
     maxkaart = maxorig;
 
     for (int i = 1; i <= aantalspelers - 2; i++) {
