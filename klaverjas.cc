@@ -874,7 +874,7 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
   
   // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
-  if (speelt == huidigespeler || opgegooid[aantalspelers][6] == 1)
+  if (speelt == huidigespeler || opgegooid[aantalslagen][6] == 1)
     speelt = -1;
   // Correctie doordat de kansverdeling de huidigespeler niet bevat
   else if (huidigespeler < speelt)
