@@ -668,8 +668,8 @@ void berekenheefttroefniet(int opgegooid[aantalslagen + 1][aantalkolommen],
 
   for (int i = 0; i <= slag; i++) {
     int komtuit = opgegooid[i][aantalspelers];
-    hoogstetroef = -1;
     for (int j = 0; j < aantalspelers; j++) {
+      hoogstetroef = -1;
       int kaart = opgegooid[i][j];
 
       if (istroef(kaart, opgegooid)) {
