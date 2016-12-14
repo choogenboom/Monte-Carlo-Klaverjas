@@ -14,7 +14,7 @@ const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
 const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
-const static double maximumkans = 0.99;
+const static double maximumkans = 0.98;
 const static bool rotterdams = true;
 const static bool metroem = true;
 const static bool tienennietweggooien = true;
@@ -905,11 +905,11 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
 
         if (kansmultiplier > totaalvankleur[troefkleur]) {
           // Kans groter dan 1, maak gelijk aan maximumkans
-          kansmultiplier = maximumkans;
+          kansmultiplier = maximumkans * totaalvankleur[troefkleur];
           kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
         }
         if (kansrest < 0) {
-          kansmultiplier = maximumkans;
+          kansmultiplier = maximumkans * totaalvankleur[troefkleur];
           kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
         }
 
@@ -1829,7 +1829,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
         }
       }
 
-      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.0, 1.0);
+      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.2, 1.2);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
