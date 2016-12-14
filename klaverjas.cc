@@ -718,7 +718,7 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
   bool alopgegooid[aantalkaarten] = {false, false, false, false, false, false, false, false};
   int speelt = opgegooid[aantalslagen][aantalspelers];
   int troefkleur = opgegooid[aantalkaarten][aantalspelers + 1];
-  int hebbenwel = 0;
+  double hebbenwel = 0;
   double kansspeelt;
   double restkans;
 
@@ -740,6 +740,28 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     if (kansverdeling[i][troefkleur] != 0)
       hebbenwel++; 
   }
+  
+  if (hebbenwel == 1) {
+    // Nog maar 1 speler heeft troeven, hij krijgt alle kansen.
+    int heeftwel = -1;
+    for (int i = 0; i < aantalspelers - 1; i++)
+      if (kansverdeling[i][troefkleur] != 0)
+        heeftwel = i;
+
+    for (int i = 0; i < aantalspelers - 1; i++) {
+      for (int j = 0; j < aantalkaarten; j++) {
+        if (i == heeftwel)
+          troefverdeling[heeftwel][j] = 1;
+        else 
+          troefverdeling[i][j] = 0;
+      }
+    }
+    
+    return;
+  }
+  // Geen troeven meer in het spel, exit functie
+  else if (hebbenwel == 0)
+    return;
 
   // Kopieer heefttroefniet
   bool heefttroefniet[aantalspelers][aantalkaarten];
@@ -776,33 +798,10 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
 
     if (hebbenwel > 1)
       restkans = (1 - kansspeelt) / (hebbenwel - 1);
-    else if (hebbenwel == 1) {
-      // Nog maar 1 speler heeft troeven, hij krijgt alle kansen.
-      int heeftwel = -1;
-      for (int i = 0; i < aantalspelers - 1; i++)
-        if (kansverdeling[i][troefkleur] != 0)
-          heeftwel = i;
-
-      for (int i = 0; i < aantalspelers - 1; i++) {
-        for (int j = 0; j < aantalkaarten; j++) {
-          if (i == heeftwel)
-            troefverdeling[heeftwel][j] = 1;
-          else 
-            troefverdeling[i][j] = 0;
-        }
-      }
-      
-      return;
-    }
-    // Geen troeven meer in het spel, exit functie
-    else
-      return; 
-
   }
   else {
-    // We nemen de kans van speler 0 uit de kansverdeling aangezien (zonder informatie)
-    // alle kansen gelijk zijn
-    kansspeelt = kansverdeling[0][troefkleur] / (double) totaaltroeven;
+    // We hebben geen extra informatie, dus de kansen zijn gelijk over de spelers die wel hebben
+    kansspeelt = 1 / hebbenwel;
     restkans = kansspeelt;
   }
 
