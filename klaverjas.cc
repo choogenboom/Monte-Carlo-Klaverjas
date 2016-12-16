@@ -825,10 +825,23 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
   }
 
   // Troefkansen zijn verdeeld, nu alleen boer en nel nog.
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    if (kansverdeling[i][troefkleur] == 0) {
+      troefverdeling[i][6] = 0;
+      troefverdeling[i][7] = 0;
+    }
+  }
+
   if (speelt == -1) {
     for (int i = 0; i < aantalspelers - 1; i++) {
-      troefverdeling[i][6] = restkans;
-      troefverdeling[i][7] = restkans;
+      if (alopgegooid[6] || troefverdeling[i][6] == 0)
+        troefverdeling[i][6] = 0;
+      else
+        troefverdeling[i][6] = restkans;
+      if (alopgegooid[7] || troefverdeling[i][6] == 0)
+        troefverdeling[i][7] = 0;
+      else
+        troefverdeling[i][7] = restkans;
     }
   }
   else {
@@ -840,15 +853,17 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     restkans = (1 - kansspeelt) / (hebbenwel - 1);
 
     for (int i = 0; i < aantalspelers - 1; i++) {
-      if (troefverdeling[i][6] != 0) {
-        if (i == speelt) {
+      if (troefverdeling[i][6] != 0 && !alopgegooid[6]) {
+        if (i == speelt)
           troefverdeling[i][6] = kansspeelt;
-          troefverdeling[i][7] = kansspeelt;
-        }
-        else {
+        else
           troefverdeling[i][6] = restkans;
+      }
+      if (troefverdeling[i][7] != 0 && !alopgegooid[7]) {
+        if (i == speelt)
+          troefverdeling[i][7] = kansspeelt;
+        else
           troefverdeling[i][7] = restkans;
-        }
       }
     }
   }
@@ -1011,7 +1026,6 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
           // Niet in heeftniet, wel in heeftnietkans --> speler heeft ingetroefd
           // Kans wordt verlaagd, overige deel verdeeld over spelers die wel hebben.
           double hebbenwel = 0;
-  berekenheeftnietmetkans(opgegooid, slag, heeftnietkans);
 
           for (int l = 0; l < aantalspelers - 1; l++) {
             if (kansverdeling[l][i] > 0 && l != k)
@@ -1023,7 +1037,7 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
           kansverdeling[k][i] = heeftnietkansmultiplier * kansverdeling[k][i];
 
           for (int l = 0; l < aantalspelers - 1; l++) {
-            if (l != k)
+            if (l != k && kansverdeling[l][i] > 0)
               kansverdeling[l][i] = kansverdeling[l][i] + kansextra;
           }
         }
@@ -1171,7 +1185,6 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
 
     for (int i = maxkaart - 1; i >= 0; i--) {
       int kleur = kleurvankaart(allekaarten[i]);
-      // bool gedeeld = false;
 
       // Als het niet de boer of nel is kijken we alleen naar de kleur voor de kansverdeling
       if (!istroef(allekaarten[i], troefkleur)) {
@@ -1191,8 +1204,6 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
           herverdeling[2][aantalgedeeld[2]] = allekaarten[i];
           aantalgedeeld[2]++;
         }
-        // if (gedeeld)
-        //   maxkaart--;
       }
       else {
         // De huidige kaart is troef, kijk naar de troefverdeling
