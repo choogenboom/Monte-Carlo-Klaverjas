@@ -799,8 +799,7 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
     if (kansspeelt > 1) 
       kansspeelt = maximumkans;
 
-    if (hebbenwel > 1)
-      restkans = (1 - kansspeelt) / (hebbenwel - 1);
+    restkans = (1 - kansspeelt) / (hebbenwel - 1);
   }
   else {
     // We hebben geen extra informatie, dus de kansen zijn gelijk over de spelers die wel hebben
@@ -855,103 +854,6 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
   }
 }
 
-/* Maakt een kansverdeling in de volgende format:
- * 
- *   |  S  H  K  R
- * --|-------------
- * 0 |  x 
- * 1 |  y
- * 2 |  x
- *
- * Waarin horizontaal de kleuren staan en verticaal de spelers, exclusief de huidige speler.
- * x, y en z zijn kansen op een kleur, waarvan de som gelijk is aan het aantal kaarten van die 
- * kleur nog te verdelen. Kans is 0 als een speler die kleur niet kan hebben.
- *
- * Speelt is de speler die speelt, of -1 als de huidige speler speelt of iemand verplicht moet.
-*/
-void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit,
-                          double kansverdeling[aantalspelers - 1][4], int huidigespeler,
-                          double multiplier, int totaalvankleur[4]) 
-{
-  int speelt = opgegooid[aantalslagen][aantalspelers];
-  int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
-  
-  // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
-  if (speelt == huidigespeler || opgegooid[aantalslagen][6] == 1)
-    speelt = -1;
-  // Correctie doordat de kansverdeling de huidigespeler niet bevat
-  else if (huidigespeler < speelt)
-    speelt--;
-  
-  // Initieer de kansverdeling op -1
-  for (int i = 0; i < aantalspelers - 1; i++) {
-    for (int j = 0; j < 4; j++) {
-      kansverdeling[i][j] = -1;
-    }
-  }
-
-  bool heeftniet[4][aantalspelers];
-  berekenheeftniet(opgegooid, slag, heeftniet);
-
-  for (int i = 0; i < 4; i++) {
-    int k = 0;
-
-    for (int j = 0; j < aantalspelers; j ++) {
-      if (j != huidigespeler) {
-        if (heeftniet[i][j])
-          kansverdeling[k][i] = 0;
-        k++;
-      }
-    }
-  }
-
-  // Kansen worden verdeeld over spelers die wel die kleur mogen hebben
-  for (int i = 0; i < 4; i++) {
-    int hebbenwel = 0;
-    for (int j = 0; j < aantalspelers - 1; j++) {
-      if (kansverdeling[j][i] != 0)
-        hebbenwel++;
-    }
-
-    if (hebbenwel > 1) {
-      double kansperspeler = (double)totaalvankleur[i] / (double)hebbenwel;
-      if (speelt == -1 || i != troefkleur) {
-        for (int j = 0; j < aantalspelers - 1; j++) {
-          if (kansverdeling[j][i] != 0)
-            kansverdeling[j][i] = kansperspeler;
-        }
-      }
-      else {
-        double kansmultiplier = kansperspeler * multiplier;
-        double kansrest = (double)(totaalvankleur[troefkleur] - kansmultiplier) / (double)(hebbenwel - 1);
-
-        if (kansmultiplier > totaalvankleur[troefkleur]) {
-          // Kans groter dan 1, maak gelijk aan maximumkans
-          kansmultiplier = maximumkans * totaalvankleur[troefkleur];
-          kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
-        }
-        if (kansrest < 0) {
-          kansmultiplier = maximumkans * totaalvankleur[troefkleur];
-          kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
-        }
-
-        for (int j = 0; j < aantalspelers - 1; j++) {
-          if (j == speelt && kansverdeling[j][troefkleur] != 0)
-            kansverdeling[j][troefkleur] = kansmultiplier;
-          else if (kansverdeling[j][troefkleur] != 0)
-            kansverdeling[j][troefkleur] = kansrest;
-        }
-      }
-    }
-    else {
-      for (int j = 0; j < aantalspelers - 1; j++) {
-        if (kansverdeling[j][i] != 0)
-          kansverdeling[j][i] = totaalvankleur[i];
-      }
-    }
-  }
-}
-
 void berekenheeftnietmetkans(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
                              bool heeftniet[4][aantalspelers]) 
 {
@@ -979,7 +881,7 @@ void berekenheeftnietmetkans(int opgegooid[aantalslagen + 1][aantalkolommen], in
         }
         else if (j != komtuit && k == 3) {
           // j komt niet uit, heeft wel kleur bekend en is de laatste speler
-          int zonderj[aantalkaarten];
+          int zonderj[aantalspelers];
 
           // Checken:
           for (int l = 0; l < aantalspelers; l++) {
@@ -989,10 +891,144 @@ void berekenheeftnietmetkans(int opgegooid[aantalslagen + 1][aantalkolommen], in
               zonderj[l] = opgegooid[i][l];
           }
 
-          if (checkroem(opgegooid[i], troefkleur) > checkroem(zonderj, troefkleur) && winnaar(zonderj, komtuit, troefkleur) != maat(j)) {
+          if (checkroem(opgegooid[i], troefkleur) > checkroem(zonderj, troefkleur) && 
+              winnaar(zonderj, komtuit, troefkleur) != maat(j) &&
+              winnaar(opgegooid[i], komtuit, troefkleur) != j) {
             heeftniet[kleurvankaart(opgegooid[i][komtuit])][j] = true;
           }
         }
+      }
+    }
+  }
+}
+
+/* Maakt een kansverdeling in de volgende format:
+ * 
+ *   |  S  H  K  R
+ * --|-------------
+ * 0 |  x 
+ * 1 |  y
+ * 2 |  x
+ *
+ * Waarin horizontaal de kleuren staan en verticaal de spelers, exclusief de huidige speler.
+ * x, y en z zijn kansen op een kleur, waarvan de som gelijk is aan het aantal kaarten van die 
+ * kleur nog te verdelen. Kans is 0 als een speler die kleur niet kan hebben.
+ *
+ * Speelt is de speler die speelt, of -1 als de huidige speler speelt of iemand verplicht moet.
+*/
+void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit,
+                          double kansverdeling[aantalspelers - 1][4], int huidigespeler,
+                          double multiplier, int totaalvankleur[4]) 
+{
+  int speelt = opgegooid[aantalslagen][aantalspelers];
+  int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
+  double heeftnietkansmultiplier = 0.5;
+  bool heeftniet[4][aantalspelers];
+  bool heeftnietkans[4][aantalspelers];
+  
+  // Als de speler zelf speelt of als een speler verplicht moet hebben we hier geen kennis over
+  if (speelt == huidigespeler || opgegooid[aantalslagen][6] == 1)
+    speelt = -1;
+  // Correctie doordat de kansverdeling de huidigespeler niet bevat
+  else if (huidigespeler < speelt)
+    speelt--;
+  
+  // Initieer de kansverdeling op -1
+  for (int i = 0; i < aantalspelers - 1; i++) {
+    for (int j = 0; j < 4; j++) {
+      kansverdeling[i][j] = -1;
+    }
+  }
+
+  berekenheeftniet(opgegooid, slag, heeftniet);
+  berekenheeftnietmetkans(opgegooid, slag, heeftnietkans);
+
+  for (int i = 0; i < 4; i++) {
+    int k = 0;
+
+    for (int j = 0; j < aantalspelers; j ++) {
+      if (j != huidigespeler) {
+        if (heeftniet[i][j])
+          kansverdeling[k][i] = 0;
+        k++;
+      }
+    }
+  }
+
+  // Kansen worden verdeeld over spelers die wel die kleur mogen hebben
+  for (int i = 0; i < 4; i++) {
+    double hebbenwel = 0;
+    for (int j = 0; j < aantalspelers - 1; j++) {
+      if (kansverdeling[j][i] != 0)
+        hebbenwel++;
+    }
+
+    if (hebbenwel > 1) {
+      double kansperspeler = (double)totaalvankleur[i] / hebbenwel;
+      if (speelt == -1 || i != troefkleur) {
+        for (int j = 0; j < aantalspelers - 1; j++) {
+          if (kansverdeling[j][i] != 0)
+            kansverdeling[j][i] = kansperspeler;
+        }
+      }
+      else {
+        double kansmultiplier = kansperspeler * multiplier;
+        double kansrest = (double)(totaalvankleur[troefkleur] - kansmultiplier) / (hebbenwel - 1);
+
+        if (kansmultiplier > totaalvankleur[troefkleur]) {
+          // Kans groter dan 1, maak gelijk aan maximumkans
+          kansmultiplier = maximumkans * totaalvankleur[troefkleur];
+          kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
+        }
+        if (kansrest < 0) {
+          kansmultiplier = maximumkans * totaalvankleur[troefkleur];
+          kansrest = (1 - kansmultiplier) / (hebbenwel - 1);
+        }
+
+        for (int j = 0; j < aantalspelers - 1; j++) {
+          if (j == speelt && kansverdeling[j][troefkleur] != 0)
+            kansverdeling[j][troefkleur] = kansmultiplier;
+          else if (kansverdeling[j][troefkleur] != 0)
+            kansverdeling[j][troefkleur] = kansrest;
+        }
+      }
+    }
+    else {
+      for (int j = 0; j < aantalspelers - 1; j++) {
+        if (kansverdeling[j][i] != 0)
+          kansverdeling[j][i] = totaalvankleur[i];
+      }
+    }
+  }
+
+  // Check verschill tussen heeftniet en heeftnietkans
+  for (int i = 0; i < 4; i++) {
+    int k = 0;
+
+    for (int j = 0; j < aantalspelers; j ++) {
+      if (j != huidigespeler) {
+        if (!heeftniet[i][j] && heeftnietkans[i][j]) {
+          // Niet in heeftniet, wel in heeftnietkans --> speler heeft ingetroefd
+          // Kans wordt verlaagd, overige deel verdeeld over spelers die wel hebben.
+          double hebbenwel = 0;
+  berekenheeftnietmetkans(opgegooid, slag, heeftnietkans);
+
+          for (int l = 0; l < aantalspelers - 1; l++) {
+            if (kansverdeling[l][i] > 0 && l != k)
+              hebbenwel++;
+          }
+
+          double kansoverig = kansverdeling[k][i] - (heeftnietkansmultiplier * kansverdeling[k][i]);
+          double kansextra = kansoverig / hebbenwel;
+          kansverdeling[k][i] = heeftnietkansmultiplier * kansverdeling[k][i];
+
+          for (int l = 0; l < aantalspelers - 1; l++) {
+            if (l != k)
+              kansverdeling[l][i] = kansverdeling[l][i] + kansextra;
+          }
+        }
+
+        k++;
       }
     }
   }
