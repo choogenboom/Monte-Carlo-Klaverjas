@@ -3,7 +3,7 @@ import subprocess
 import random
 from math import *
 
-num = 16*5
+num = 16*500
 
 sp1 = '5'
 sp2 = '2'
