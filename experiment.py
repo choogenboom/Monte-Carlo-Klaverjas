@@ -2,49 +2,81 @@
 import subprocess
 import random
 from math import *
+from multiprocessing import Pool
 
-num = 16*500
+boompjes = 5
+num = boompjes * 4
+
+filename = "result.txt"
 
 sp1 = '5'
 sp2 = '2'
 sp3 = '5'
 sp4 = '2'
 
-som1 = 0
-som2 = 0
-
-komtuit = 0
+results = []
+team1 = []
+team2 = []
 
 intmaxout = subprocess.check_output(['./klaverjas', '-im'])
 intmax = int(str(intmaxout)[2:-3])
 errors = 0
 
-f = open('result.txt', 'w')
+def som(input):
+  output = 0
+  for i in input:
+    print(str(input[i]) + " " + str(output))
+    output = output + input[i]
 
-for i in range(num):
+  return output
+
+def run(komtuit): 
   seed = str(random.randint(0, intmax))
   fail = False
-
+  # print("Run met komtuit=" + str(komtuit))
   try:
     rout = subprocess.check_output(['./klaverjas', str('-e'), sp1, sp2, sp3, sp4, seed, str(komtuit)], shell=False)
   except subprocess.CalledProcessError as grepexc:
-    print("fail, opnieuw " + str(i))
     fail = True;
   if not fail:
     output = str(rout)[2:-3]
 
-    team1 = int(output.split()[0])
-    team2 = int(output.split()[1])
+    score1 = int(output.split()[0])
+    score2 = int(output.split()[1])
 
-    som1 = som1 + team1
-    som2 = som2 + team2
+    result = [score1, score2]
 
-    f.write("1: " + str(team1) + ", 2: " + str(team2) + "\n")
-    komtuit = (komtuit + 1) % 4
-    print(str(round((i / num) * 100, 1)) + "%", end='\r')
+    with open(filename, "a") as f:
+      f.write(str(komtuit) + " - 1: " + str(score1) + ", 2: " + str(score2) + "\n")
+    
+    # print(str(komtuit) + " - 1: " + str(score1) + ", 2: " + str(score2))
+    return result
   else:
-    i = i - 1
     errors = errors + 1
+    print("Error...\n")
+    run(komtuit)
 
-f.write("\n\n1+3: " + str(som1) + ", 2+4: " + str(som2) + "\n" + "Errors: " + str(errors) + "\n")
-f.close()
+for i in range(num):
+  if __name__ == '__main__':
+    print(str(round((i / num) * 100, 1)) + "%", end='\r')
+    # Python 3.5:
+    # with Pool(processes=4) as pool:
+    pool = Pool(processes=4)
+    results = pool.map(run, range(4))
+    pool.close()
+    pool.join()
+
+    for k in range(4):
+      team1.append(results[k][0])
+      team2.append(results[k][1])
+
+som1 = sum(team1)
+som2 = sum(team2)
+# print(str(len(results)))
+# print(team1)
+# for j in team1:
+#   som1 = som1 + team1[j]
+#   som2 = som2 + team2[j]
+
+with open(filename, "a") as f:
+  f.write("\n\n1+3: " + str(som1) + ", 2+4: " + str(som2) + "\n" + "Errors: " + str(errors) + "\n")
