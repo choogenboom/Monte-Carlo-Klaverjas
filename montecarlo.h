@@ -20,7 +20,7 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
 int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
                        int slag, int komtuit, int huidigespeler, int niveaurandom, bool output);
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, bool experiment);
+                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, float kans, bool experiment);
 
 
 #endif

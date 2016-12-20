@@ -18,6 +18,7 @@ const static int aantalkaarten = 8;
 const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
 const static double maximumkans = 0.98;
+const static float kans = 0.1;
 const static bool rotterdams = true;
 const static bool metroem = true;
 const static bool tienennietweggooien = true;

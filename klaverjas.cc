@@ -861,19 +861,19 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
           while (waarde == -1)
             waarde = usermove(spelerskaarten[huidigespeler], slag);
         else if (spelers[huidigespeler] == 1) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true, experiment);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true, kans, experiment);
           if (output) {
             cout << "Monte Carlo played " << Kaarten(waarde) << endl << endl;
           }
         }
         else if (spelers[huidigespeler] == 2) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false, experiment);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false, 0, experiment);
           if (output) {
             cout << "Monte Carlo (deterministic) played " << Kaarten(waarde) << endl << endl;
           }
         }
         else if (spelers[huidigespeler] == 3) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false, experiment);
+          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false, 0, experiment);
           if (output) {
             cout << "Monte Carlo (fully random) played " << Kaarten(waarde) << endl << endl;
           }

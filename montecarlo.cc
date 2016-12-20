@@ -788,7 +788,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
 }
 
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, bool experiment) {
+                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, float kans, bool experiment) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
@@ -796,7 +796,6 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int kopie[aantalslagen + 1][aantalkolommen];
   int spelerskaarten[aantalspelers][aantalkaarten];
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
-  float kans;
 
   geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, troefkleur, mogelijkekaarten, aantalmogelijkheden);
 
@@ -811,7 +810,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   if (!metkans)
     kans = 0;
   else
-    kans = 0.5;
+    kans = 1 - kans;
 
   // Nu doen we aantalrandompotjes potjes voor elke mogelijke kaart
   int beste[2] = {-1, -1}; // beste[0] = beste kaart, beste [1] = aantal punten
