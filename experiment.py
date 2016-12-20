@@ -4,14 +4,14 @@ import random
 from math import *
 from multiprocessing import Pool
 
-boompjes = 5
-num = boompjes * 4
+takjes = 100
+num = takjes * 4
 
 filename = "result.txt"
 
-sp1 = '5'
+sp1 = '1'
 sp2 = '2'
-sp3 = '5'
+sp3 = '1'
 sp4 = '2'
 
 results = []
