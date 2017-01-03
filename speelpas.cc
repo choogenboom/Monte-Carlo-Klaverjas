@@ -25,7 +25,7 @@ bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit, int troefkleur) {
     // De rest van de kaarten worden willekeurig verdeeld
     deelrestkaarten(opgegooid, 0, komtuit, 0, spelerskaarten, false);
 
-    speel(spelers, opgegooid, spelerskaarten, 0, komtuit, komtuit, false, false);
+    speel(spelers, opgegooid, spelerskaarten, 0, komtuit, komtuit, false, false, false);
     wij += opgegooid[aantalslagen][0];
     zij += opgegooid[aantalslagen][1];
   }

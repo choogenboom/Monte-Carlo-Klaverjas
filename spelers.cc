@@ -1,3 +1,4 @@
+#include "klaverjas.h"
 #include "spelers.h"
 
 /* Argumenten:
@@ -220,33 +221,6 @@ int semiramdommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],
 
     return mogelijkekaarten[randomkaart];
   }
-}
-
-int tactiekmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                int slag, int komtuit, int huidigespeler, bool output) {
-  // int mogelijkekaarten[aantalkaarten];
-  // int aantalmogelijkheden = 0;
-  // int maxkaart = aantalkaarten - slag;
-  // int slagwinnaar = -1;
-
-  // geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, mogelijkekaarten, aantalmogelijkheden);
-
-  // int slagwinnaar = winnaar(opgegooid[slag], komtuit);
-  
-  // if (komtuit == huidigespeler) {
-
-  // }
-  // else {
-  //   if (slagwinnaar == maat(huidigespeler)) {
-  //     // Bijgooien
-
-  //   }
-  //   else {
-  //     // Troep weggooien OF slag winnen
-  //   }
-  // }
-
-  return 0;
 }
 
 int randommove(int kaarten[aantalkaarten], int opgegooid[aantalkolommen],

@@ -152,9 +152,6 @@ int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, i
 
     // Als we in een onmogelijke deling zitten door de kans, ga terug naar normale deling
     if ((aantaldelingen > maximumdelingen && metkans) || foutedeling) {
-      // if (output)
-      //   cout << "Onmogelijke deling..." << endl;
-      // Maak spelerskaarten weer leeg...
       for (int k = 0; k < aantalspelers; k++) {
         if (k != huidigespeler) {
           for (int l = 0; l < aantalkaarten; l++) {
@@ -254,9 +251,6 @@ int deelkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int slag,
   // Maak kansverdeling
   berekenkansverdeling(opgegooid, slag, komtuit, kansverdeling, huidigespeler, multiplier, totaalvankleur);
   berekentroefverdeling(opgegooid, slag, komtuit, troefverdeling, huidigespeler, kansverdeling, multiplier2, totaalvankleur[troefkleur]);
-
-  if (slag == 6)
-    cout << " ";
 
   // Initieer zoumoetenhebben
   int zoumoetenhebben[aantalspelers - 1] = {aantalkaarten - slag, aantalkaarten - slag, aantalkaarten - slag};
@@ -765,10 +759,8 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
-// cout << endl;
-//       printkaarten(spelerskaarten);
-// cout << endl;
-      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false);
+
+      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false, false);
 
       punten += kopie[aantalslagen][huidigespeler];
     }
@@ -853,7 +845,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
       // printkaarten(spelerskaarten);
 
-      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false);
+      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false, false);
 
       punten += kopie[aantalslagen][huidigespeler];
     }
@@ -861,9 +853,6 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
     if (output)
       cout << Kaarten(mogelijkekaarten[i]) << " has " << punten
            << " points, average of " << delingen / aantalrandompotjes << " reshufflings." << endl;
-
-    // if (experiment)
-    //   cout << slag << " " << delingen << endl;
 
     if (punten > beste[1]) {
       beste[0] = i;
