@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import subprocess
 import random
 from math import *
@@ -20,15 +20,6 @@ team2 = []
 
 intmaxout = subprocess.check_output(['./klaverjas', '-im'])
 intmax = int(str(intmaxout)[2:-3])
-errors = 0
-
-def som(input):
-  output = 0
-  for i in input:
-    print(str(input[i]) + " " + str(output))
-    output = output + input[i]
-
-  return output
 
 def run(komtuit): 
   seed = str(random.randint(0, intmax))
@@ -59,8 +50,6 @@ def run(komtuit):
 for i in range(num):
   if __name__ == '__main__':
     print(str(round((i / num) * 100, 1)) + "%", end='\r')
-    # Python 3.5:
-    # with Pool(processes=4) as pool:
     pool = Pool(processes=4)
     results = pool.map(run, range(4))
     pool.close()
@@ -72,11 +61,6 @@ for i in range(num):
 
 som1 = sum(team1)
 som2 = sum(team2)
-# print(str(len(results)))
-# print(team1)
-# for j in team1:
-#   som1 = som1 + team1[j]
-#   som2 = som2 + team2[j]
 
 with open(filename, "a") as f:
   f.write("\n\n1+3: " + str(som1) + ", 2+4: " + str(som2) + "\n" + "Errors: " + str(errors) + "\n")
