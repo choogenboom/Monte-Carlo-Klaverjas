@@ -682,7 +682,7 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
         troefverdeling[i][6] = 0;
       else
         troefverdeling[i][6] = restkans;
-      if (alopgegooid[7] || troefverdeling[i][6] == 0)
+      if (alopgegooid[7] || troefverdeling[i][7] == 0)
         troefverdeling[i][7] = 0;
       else
         troefverdeling[i][7] = restkans;
@@ -760,7 +760,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
         }
       }
 
-      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.1, 1.2);
+      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.2, 1.5);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
