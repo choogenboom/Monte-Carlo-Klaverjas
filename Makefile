@@ -31,4 +31,7 @@ spelers.o: spelers.cc spelers.h
 	$(CC) $(CFLAGS) spelers.cc
 
 clean:
-	\rm *.o klaverjas
+	\rm -rf *.o *.spl klaverjas
+
+touch:
+	touch Speler0.spl Speler1.spl Speler2.spl Speler3.spl
