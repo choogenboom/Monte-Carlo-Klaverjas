@@ -1,18 +1,34 @@
-CC=g++
-RM=rm -f
-# CPPFLAGS=-g
-# LDFLAGS=-g $(shell root-config --ldflags)
-# LDLIBS=$(shell root-config --libs)
+CC = g++
+RM = rm -f
+OBJS = klaverjas.o montecarlo.o speelpas.o spelers.o
+DEBUG = -g
+CFLAGS = -Wall -c
+LFLAGS = -Wall
 
-SRCS=klaverjas.cc montecarlo.cc speelpas.cc spelers.cc
+all: opt
 
-all: klaverjas
+opt: CFLAGS += -O2
+opt: LFLAGS += -O2
+opt: klaverjas
 
-klaverjas: 
-	$(CC) -O2 -o klaverjas $(SRCS)
+debug: CFLAGS += -g
+debug: LFLAGS += -g
+debug: klaverjas
 
-debug: 
-	$(CC) -g -o klaverjas klaverjas.cc montecarlo.cc speelpas.cc spelers.cc
+klaverjas: $(OBJS)
+	$(CC) $(LFLAGS) $(OBJS) -o klaverjas
 
-clean: 
-	rm -f klaverjas
+klaverjas.o: klaverjas.cc klaverjas.h montecarlo.h speelpas.h
+	$(CC) $(CFLAGS) klaverjas.cc
+
+montecarlo.o: montecarlo.cc montecarlo.h spelers.h
+	$(CC) $(CFLAGS) montecarlo.cc
+
+speelpas.o: speelpas.cc speelpas.h
+	$(CC) $(CFLAGS) speelpas.cc
+
+spelers.o: spelers.cc spelers.h
+	$(CC) $(CFLAGS) spelers.cc
+
+clean:
+	\rm *.o klaverjas
