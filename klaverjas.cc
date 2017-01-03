@@ -131,7 +131,7 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
 }
 
 void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit, 
-               bool &experiment, bool &file, string &filename, int &seed) {
+               bool &experiment, bool &competitite, bool &file, string &filename, int &seed) {
   if (argc == aantalspelers + 1) {
     for (int i = 0; i < aantalspelers; i++) {
       spelers[i] = atoi(argv[i + 1]);
@@ -177,6 +177,23 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit,
 
     if (argc > aantalspelers + 3) {
       komtuit = atoi(argv[7]);
+    }
+  }
+  else if (argv[1] == string("-c")) {
+    // Competitie
+    competitite = true;
+
+    if (argc == 7) {
+      // laatste arg is komtuit
+      for (int i = 0; i < aantalspelers; i++)
+        spelers[i] = atoi(argv[i + 2]);
+
+      komtuit = atoi(argv[6]);
+    }
+    if (argc == 6) {
+      // Argumenten zijn alleen de spelers
+      for (int i = 0; i < aantalspelers; i++)
+        spelers[i] = atoi(argv[i + 2]);
     }
   }
   else if (argv[1] == string("-im")) {
@@ -843,62 +860,223 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage
     return 1;
 }
 
+bool schrijfbestand(int speler, int opgegooid[aantalspelers], int vorigeslag[aantalspelers], 
+                    int kaarten[aantalkaarten], int troefkleur) {
+  string filename;
+  stringstream ss;
+  ss << speler;
+  filename = "Speler" + ss.str() + ".spl";
+
+  ofstream file(filename.c_str(), ios::out | ios::app);
+  int aantalenters = 8;
+
+  if (file.is_open()) {
+    for (int i = 0; i < aantalenters; i++)
+      file << endl;
+
+    file << Kleuren(troefkleur) << " is troef." << endl << endl;
+
+    file << "Mijn kaarten:" << endl << "-------------" << endl << endl << endl;
+    
+    for (int i = 0; i < aantalkaarten; i++)
+      file << Kaarten(kaarten[i]) << " ";
+    
+    file << endl << endl << "Opgegooid:" << endl << "----------" << endl;
+    
+    for (int i = 0; i < aantalspelers; i++)
+      file << Kaarten(opgegooid[i]) << " ";
+
+    file << endl << endl << "Vorige slag:" << endl << "-------------" << endl;
+
+    for (int i = 0; i < aantalspelers; i++)
+      file << Kaarten(vorigeslag[i]) << " ";
+
+    file << endl;
+    file.close();
+
+    return true;
+  }
+  else
+    return false;
+}
+
+void schrijfbestanden(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
+                      int spelerskaarten[aantalspelers][aantalkaarten], int slag) {
+  int legeslag[aantalspelers] = {-1, -1, -1, -1};
+
+  for (int i = 0; i < aantalspelers; i++) {
+    if (slag == 0)
+      schrijfbestand(i, opgegooid[slag], legeslag, spelerskaarten[i], opgegooid[aantalslagen][aantalspelers + 1]);
+    else
+      schrijfbestand(i, opgegooid[slag], opgegooid[slag - 1], spelerskaarten[i], opgegooid[aantalslagen][aantalspelers + 1]);
+  }
+}
+
+bool appendbestand(int speler, string str) {
+  string filename;
+  stringstream ss;
+  ss << speler;
+  filename = "Speler" + ss.str() + ".spl";
+
+  ofstream file(filename.c_str(), ios::out | ios::app);
+
+  if (file.is_open()) {
+    file << endl << endl << str << endl;
+
+    file.close();
+    return true;
+  }
+  else
+    return false;
+}
+
+void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
+  int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
+  int komtuit, bool output, bool experiment, bool competitite) {
+  int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
+
+  for (int i = 0; i < aantalspelers; i++) {
+    // Als we halverwege de slag invallen kan een speler al aan de beurt zijn geweest
+    if (opgegooid[slag][huidigespeler] == -1) {
+      int waarde = -1;
+      if (output)
+        cout << "Player " << huidigespeler << " must play a card, " << komtuit << " has the elder hand. " << endl;
+
+      if (spelers[huidigespeler] == 0) {
+        while (waarde == -1)
+          waarde = usermove(spelerskaarten[huidigespeler], slag);
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+      else if (spelers[huidigespeler] == 1) {
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true, kans, experiment);
+        if (output)
+          cout << "Monte Carlo played " << Kaarten(waarde) << endl << endl;
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+      else if (spelers[huidigespeler] == 2) {
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false, 0, experiment);
+        if (output)
+          cout << "Monte Carlo (deterministic) played " << Kaarten(waarde) << endl << endl;
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+      else if (spelers[huidigespeler] == 3) {
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false, 0, experiment);
+        if (output)
+          cout << "Monte Carlo (fully random) played " << Kaarten(waarde) << endl << endl;
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+      else if (spelers[huidigespeler] == 4) {
+        waarde = semiramdommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
+        if (output)
+          cout << "Semirandom played " << Kaarten(waarde) << endl << endl;
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+      else if (spelers[huidigespeler] == 5) {
+        waarde = montecarlokansmove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
+        if (output)
+          cout << "Monte Carlo (probability distribution) played " << Kaarten(waarde) << endl << endl;
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+      else {
+        waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
+        if (output)
+          cout << "Random played " << Kaarten(waarde)  << endl << endl;
+        if (competitite) 
+          schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+      }
+
+      opgegooid[slag][huidigespeler] = waarde;
+      huidigespeler = (huidigespeler + 1) % aantalspelers;
+    }
+  }
+}
+
+int speelcompetitie(int spelers[aantalspelers], int komtuit) {
+  int handjes = 16;
+  int opgegooid[aantalslagen + 1][aantalkolommen];
+  int spelerskaarten[aantalspelers][aantalkaarten];
+  bool output = true;
+  int slag;
+  int huidigespeler;
+  int troefkleur;
+  for (int handje = 0; handje < handjes; handje++) {
+    for (int i = 0; i < aantalslagen + 1; i++)
+      for (int j = 0; j < aantalkolommen; j++)
+      opgegooid[i][j] = -1;
+    for (int i = 0; i < aantalspelers; i++)
+      for (int j = 0; j < aantalkaarten; j++)
+        spelerskaarten[i][j] = -1;
+
+    deelkaarten(spelerskaarten);
+    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output);
+    schrijfbestanden(spelers, opgegooid, spelerskaarten, slag);
+    troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
+    opgegooid[0][aantalspelers] = komtuit;
+
+    slag = 0;
+    huidigespeler = komtuit;
+    while (slag < aantalslagen) {
+      speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, true, false, true);
+      
+      komtuit = winnaar(opgegooid[slag], komtuit, troefkleur);
+      opgegooid[slag][aantalspelers + 1] = komtuit;
+      opgegooid[slag][aantalspelers + 2] = waardeerkaarten(opgegooid[slag], aantalspelers, troefkleur, output);
+      opgegooid[slag][aantalspelers + 3] = geefroem(opgegooid[slag], troefkleur, output);
+
+      if (slag < aantalslagen - 1)
+        opgegooid[slag + 1][aantalspelers] = komtuit;
+
+      // 10 punten extra voor de laatste slag
+      if (slag == aantalslagen - 1)
+        opgegooid[slag][aantalspelers + 2] = opgegooid[slag][aantalspelers + 2] + 10;
+
+      printkaarten(spelerskaarten);
+      printspel(opgegooid);
+
+      // Schrijf resultaten naar de bestanden...
+      stringstream ss;
+      
+      ss << komtuit;
+      string slagwinnaar = ss.str();
+      ss.str(std::string());
+
+      ss << opgegooid[slag][aantalspelers + 2];
+      string punten = ss.str();
+      ss.str(std::string());
+
+      ss << opgegooid[slag][aantalspelers + 3];
+      string roem = ss.str();
+      string appendstr = "Slag gewonnen door speler " + slagwinnaar + " met " + punten + " punten en " + roem + " roem.\n";
+
+      for (int i = 0; i < aantalspelers; i++)
+        appendbestand(i, appendstr);
+
+      cin.get();
+
+      // En klaarmaken voor de volgende slag
+      huidigespeler = komtuit;
+      slag++;
+    }
+  }
+
+  return 0;
+}
+
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, int komtuit, bool output, bool experiment) {
+          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
+          int komtuit, bool output, bool experiment, bool competitite) {
   
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
   
   while (slag < aantalslagen) {
-    for (int i = 0; i < aantalspelers; i++) {
-      // Als we halverwege de slag invallen kan een speler al aan de beurt zijn geweest
-      if (opgegooid[slag][huidigespeler] == -1) {
-        int waarde = -1;
+    speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, experiment, competitite);
 
-        if (output)
-          cout << "Player " << huidigespeler << " must play a card, " << komtuit << " has the elder hand. " << endl;
-
-        if (spelers[huidigespeler] == 0)
-          while (waarde == -1)
-            waarde = usermove(spelerskaarten[huidigespeler], slag);
-        else if (spelers[huidigespeler] == 1) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true, kans, experiment);
-          if (output) {
-            cout << "Monte Carlo played " << Kaarten(waarde) << endl << endl;
-          }
-        }
-        else if (spelers[huidigespeler] == 2) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false, 0, experiment);
-          if (output) {
-            cout << "Monte Carlo (deterministic) played " << Kaarten(waarde) << endl << endl;
-          }
-        }
-        else if (spelers[huidigespeler] == 3) {
-          waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false, 0, experiment);
-          if (output) {
-            cout << "Monte Carlo (fully random) played " << Kaarten(waarde) << endl << endl;
-          }
-        }
-        else if (spelers[huidigespeler] == 4) {
-          waarde = semiramdommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
-          if (output)
-            cout << "Semirandom played " << Kaarten(waarde) << endl << endl;
-        }
-        else if (spelers[huidigespeler] == 5) {
-          waarde = montecarlokansmove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
-          if (output) {
-            cout << "Monte Carlo (probability distribution) played " << Kaarten(waarde) << endl << endl;
-          }
-        }
-        else {
-          waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
-          if (output)
-            cout << "Random played " << Kaarten(waarde)  << endl << endl;
-        }
-
-        opgegooid[slag][huidigespeler] = waarde;
-        huidigespeler = (huidigespeler + 1) % aantalspelers;
-      }
-    }
     if (output)
       cout << winnaar(opgegooid[slag], komtuit, troefkleur) << " wins the trick" << endl;
 
@@ -1003,13 +1181,14 @@ int main(int argc, char* argv[]) {
   bool output = true;
   bool file = false;
   bool experiment = false;
+  bool competitite = false;
   int troef;
   int slag = 0;
   int huidigespeler = 0;
   int seed = time(NULL);
   string filename = "";
 
-  parseargv(argc, argv, spelers, komtuit, experiment, file, filename, seed);
+  parseargv(argc, argv, spelers, komtuit, experiment, competitite, file, filename, seed);
   srand(seed);
 
   opgegooid[0][aantalspelers] = -1;
@@ -1019,8 +1198,12 @@ int main(int argc, char* argv[]) {
       opgegooid[i][j] = -1;
 
   if (!file) {
-    if (experiment) {
+    if (experiment)
       output = false;
+
+    if (competitite) {
+      speelcompetitie(spelers, komtuit);
+      exit(0);
     }
 
     opgegooid[0][aantalspelers] = komtuit;
@@ -1056,7 +1239,7 @@ int main(int argc, char* argv[]) {
     printspel(opgegooid);
   }
 
-  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, experiment);
+  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, experiment, false);
 
   if (!experiment)
     printspel(opgegooid);
