@@ -47,6 +47,7 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit,
                bool &experiment, bool &competitite, bool &file, string &filename, int &seed);
 bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten[aantalspelers][aantalkaarten], 
                  int &troef, int opgegooid[aantalspelers + 1][aantalkolommen], int &slag, int &komtuit);
+string naarstring(int input);
 int kleurvankaart(int kaart);
 bool istroef(int kaart, int opgegooid[aantalslagen + 1][aantalkolommen]);
 bool istroef(int kaart, int troefkleur);
@@ -55,7 +56,7 @@ int waardeerkaart(int kaart, int troefkleur);
 int roemvolgorde(int kaart);
 int maat(int speler);
 int wiespeelt(int opgegooid[aantalslagen + 1][aantalkolommen]);
-void insertionsort(int input[aantalspelers]);
+void insertionsort(int input[], int lengte);
 void printkaarten(int spelerskaarten[aantalspelers][aantalkaarten]);
 int winnaar(int kaarten[aantalspelers], int komtuit, int troefkleur);
 void printspel(int opgegooid[aantalslagen + 1][aantalkolommen]);
@@ -77,19 +78,20 @@ int geefroem(int kaarten[aantalspelers], int troefkleur, bool output);
 int teamroem(int opgegooid[aantalslagen + 1][aantalkolommen], int speler);
 int waardeerkaarten(int kaarten[], int maxkaart, int troefkleur, bool output);
 int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage);
-bool schrijfbestand(int speler, int opgegooid[aantalspelers], int vorigeslag[aantalspelers], 
-                    int kaarten[aantalkaarten], int troefkleur);
+void schrijfenters(int speler, int aantalenters);
+bool schrijfbestand(int speler, int opgegooid[aantalslagen + 1][aantalkolommen], int vorigeslag[aantalspelers], 
+                    int kaarten[aantalkaarten], int slag, string message);
 void schrijfbestanden(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-                      int spelerskaarten[aantalspelers][aantalkaarten], int slag);
-bool appendbestand(int speler, string str);
+                      int spelerskaarten[aantalspelers][aantalkaarten], int slag, string message);
+bool appendbestand(int speler, string message, int entersvooraf);
 void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
+          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int &huidigespeler, 
           const int komtuit, bool output, bool experiment, bool competitite);
 int speelcompetitie(int spelers[aantalspelers], int komtuit);
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
           int komtuit, bool output, bool experiment, bool competitite);
 void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers],
-                 int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, bool output);
+                 int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, bool output, bool competitite);
 
 #endif

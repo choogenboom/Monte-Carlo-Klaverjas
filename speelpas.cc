@@ -139,14 +139,29 @@ bool userspeelt(int kaarten[aantalkaarten], int kleur) {
     return false;
 }
 
-int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers], int kleur, int komtuit) {
+int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers], int kleur, int komtuit, bool competitie) {
   int speelt = -1;
 
   for (int i = 0; i < aantalspelers; i++) {
     int maghetzeggen = (komtuit + i) % aantalspelers;
 
     if (spelers[maghetzeggen] == 0) {
+      // Voor het overzicht worden de kaarten van mensen gesorteerd
+      insertionsort(spelerskaarten[maghetzeggen], aantalkaarten);
       cout << maghetzeggen << ": " << endl;
+
+      if (competitie) {
+        stringstream ss;
+        ss << "Je kaarten:" << endl;
+        
+        for (int j = 0; j < aantalkaarten; j++)
+          ss << Kaarten(spelerskaarten[maghetzeggen][j]);
+
+        ss << endl << endl << "Geef aan of je wilt spelen op " << Kleuren(kleur) << ".";
+        // schrijfenters(maghetzeggen, 30);
+
+        appendbestand(maghetzeggen, ss.str(), 30);
+      }
 
       if (userspeelt(spelerskaarten[maghetzeggen], kleur))
         speelt = maghetzeggen;

@@ -4,7 +4,7 @@
 #ifndef __speelpas_h__
 #define __speelpas_h__
 
-int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers], int kleur, int komtuit);
+int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers], int kleur, int komtuit, bool competitie);
 
 bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit, int troefkleur);
 bool puntenspeelt(int kaarten[aantalkaarten], int troefkleur);

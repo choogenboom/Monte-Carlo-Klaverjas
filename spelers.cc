@@ -248,6 +248,9 @@ int usermove(int kaarten[aantalkaarten], int slag) {
   int input;
   int maxkaart = aantalkaarten - slag;
 
+  // We sorteren de kaarten van menselijke spelers voor het overzicht 
+  insertionsort(kaarten, maxkaart);
+
   cout << endl << "Kies een kaart om op te gooien: " << endl;
   for (int i = 0; i < maxkaart; i++)
     cout << i << ": " << Kaarten(kaarten[i]) << endl;
