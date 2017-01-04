@@ -753,14 +753,25 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
           kopie[k][l] = opgegooid[k][l];
         }
       }
-
+if (mogelijkekaarten[i] == 11)
+  cout << " ";
       delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.2, 1.5);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
 
-      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false, false);
+      if (((huidigespeler + 1) % aantalspelers) != komtuit)
+        speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, false, false, false);
+      else {
+        int kopieslagwinnaar = winnaar(kopie[slag], komtuit, troefkleur);
+        kopie[slag + 1][aantalspelers] = kopieslagwinnaar;
+        kopie[slag][aantalspelers + 1] = kopieslagwinnaar;
+        kopie[slag][aantalspelers + 2] = waardeerkaarten(kopie[slag], aantalspelers, troefkleur, false);
+        kopie[slag][aantalspelers + 3] = geefroem(kopie[slag], troefkleur, false);
+
+        speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, false, false, false);
+      }
 
       punten += kopie[aantalslagen][huidigespeler];
     }
@@ -844,8 +855,18 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
       // printkaarten(spelerskaarten);
+      
+      if (((huidigespeler + 1) % aantalspelers) != komtuit)
+        speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, false, false, false);
+      else {
+        int kopieslagwinnaar = winnaar(kopie[slag], komtuit, troefkleur);
+        kopie[slag + 1][aantalspelers] = kopieslagwinnaar;
+        kopie[slag][aantalspelers + 1] = kopieslagwinnaar;
+        kopie[slag][aantalspelers + 2] = waardeerkaarten(kopie[slag], aantalspelers, troefkleur, false);
+        kopie[slag][aantalspelers + 3] = geefroem(kopie[slag], troefkleur, false);
 
-      speel(spelers, kopie, spelerskaarten, slag, huidigespeler + 1, komtuit, false, false, false);
+        speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, false, false, false);
+      }
 
       punten += kopie[aantalslagen][huidigespeler];
     }
