@@ -2,6 +2,7 @@
 #include "spelers.h"
 #include "montecarlo.h"
 #include "speelpas.h"
+#include "competitie.h"
 
 ostream& operator<<(ostream& os, const Kleuren kleur) {
   string s;
@@ -867,113 +868,6 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage
     return 1;
 }
 
-void schrijfenters(int speler, int aantalenters) {
-  string filename = "Speler" + naarstring(speler) + ".spl";
-  ofstream file(filename.c_str(), ios::out | ios::app);
-
-  for (int i = 0; i < aantalenters; i++)
-    file << endl;
-  file.close();
-}
-
-bool schrijfbestand(int speler, int opgegooid[aantalslagen + 1][aantalkolommen], int vorigeslag[aantalspelers], 
-                    int kaarten[aantalkaarten], int slag, string message) {
-  int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
-  schrijfenters(speler, 30);
-  string filename = "Speler" + naarstring(speler) + ".spl";
-
-  ofstream file(filename.c_str(), ios::out | ios::app);
-
-  file.clear();
-  file.seekp(0, ios::beg);
-
-  if (file.is_open()) {
-    file << Kleuren(troefkleur) << " is troef, " << opgegooid[aantalslagen][aantalspelers] << " speelt." << endl << endl;
-
-    file << "Opgegooid:" << endl << "----------" << endl;
-    for (int i = 0; i < aantalspelers; i++)
-      file << Kaarten(opgegooid[slag][i]) << " ";
-    file << endl;
-
-    // Pijltje laten zien bij de huidige speler
-    for (int i = 0; i < 5 * speler; i++) 
-      file << " ";
-    file << "^" << endl;
-
-    file << endl << endl << endl;
-
-    file << "Vorige slag:" << endl << "-------------" << endl;
-    for (int i = 0; i < aantalspelers; i++)
-      file << Kaarten(vorigeslag[i]) << " ";
-
-    file << endl << endl << endl << endl;
-
-    file << "Je kaarten:" << endl << "-------------" << endl;
-    for (int i = 0; i < aantalkaarten; i++)
-      file << Kaarten(kaarten[i]) << " ";
-
-    file << endl << endl;
-
-    file << message << endl;
-
-    file.close();
-
-    return true;
-  }
-  else
-    return false;
-}
-
-void schrijfbestanden(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-                      int spelerskaarten[aantalspelers][aantalkaarten], int slag, string bericht) {
-  int legeslag[aantalspelers] = {-1, -1, -1, -1};
-
-  for (int i = 0; i < aantalspelers; i++) {
-    if (slag == 0)
-      schrijfbestand(i, opgegooid, legeslag, spelerskaarten[i], slag, "");
-    else
-      schrijfbestand(i, opgegooid, opgegooid[slag - 1], spelerskaarten[i], slag, "");
-    appendbestand(i, bericht, 0);
-  }
-}
-
-bool prependbestand(int speler, string bericht) {
-  schrijfenters(speler, 30);
-  string filename = "Speler" + naarstring(speler) + ".spl";
-  ofstream file(filename.c_str(), ios::out | ios::app);
-
-  file.clear();
-  file.seekp(0, ios::beg);
-
-  if (file.is_open()) {
-    file << bericht << endl;
-
-    file.close();
-    return true;
-  }
-  else
-    return false;
-}
-
-bool appendbestand(int speler, string bericht, int entersvooraf) {
-    // schrijfenters(speler, entersvooraf);
-  string filename = "Speler" + naarstring(speler) + ".spl";
-
-  ofstream file(filename.c_str(), ios::out | ios::app);
-
-  if (file.is_open()) {
-    for (int i = 0; i < entersvooraf; i++)
-      file << endl;
-
-    file << bericht << endl;
-
-    file.close();
-    return true;
-  }
-  else
-    return false;
-}
-
 void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
   int spelerskaarten[aantalspelers][aantalkaarten], int slag, int &huidigespeler, 
   int komtuit, bool output, bool experiment, bool competitite) {
@@ -981,7 +875,7 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
 
   for (int i = 0; i < aantalspelers; i++) {
     if (competitite)
-      schrijfbestanden(spelers, opgegooid, spelerskaarten, slag, "Speler " + naarstring(huidigespeler) + " is aan de beurt.");
+      schrijfbestanden(spelers, opgegooid, spelerskaarten, slag, "");
 
     // Als we halverwege de slag invallen kan een speler al aan de beurt zijn geweest
     if (opgegooid[slag][huidigespeler] == -1) {
@@ -1026,86 +920,8 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
 
       opgegooid[slag][huidigespeler] = waarde;
       huidigespeler = (huidigespeler + 1) % aantalspelers;
-      // if (competitite)
-      //   schrijfbestanden(spelers, opgegooid, spelerskaarten, slag, "");
     }
   }
-}
-
-int speelcompetitie(int spelers[aantalspelers], int komtuit) {
-  int handjes = 16;
-  int opgegooid[aantalslagen + 1][aantalkolommen];
-  int spelerskaarten[aantalspelers][aantalkaarten];
-  bool output = true;
-  int slag;
-  int huidigespeler;
-  int troefkleur;
-
-  for (int handje = 0; handje < handjes; handje++) {
-    // Initieer opgegooid
-    for (int i = 0; i < aantalslagen + 1; i++)
-      for (int j = 0; j < aantalkolommen; j++)
-      opgegooid[i][j] = -1;
-    // En initieer spelerskaarten
-    for (int i = 0; i < aantalspelers; i++)
-      for (int j = 0; j < aantalkaarten; j++)
-        spelerskaarten[i][j] = -1;
-
-    deelkaarten(spelerskaarten);
-    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output, true);
-    troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
-    opgegooid[0][aantalspelers] = komtuit;
-
-    slag = 0;
-    huidigespeler = komtuit;
-    while (slag < aantalslagen) {
-      // schrijfbestanden(spelers, opgegooid, spelerskaarten, slag, "");
-      speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, false, true);
-
-      komtuit = winnaar(opgegooid[slag], komtuit, troefkleur);
-      opgegooid[slag][aantalspelers + 1] = komtuit;
-      opgegooid[slag][aantalspelers + 2] = waardeerkaarten(opgegooid[slag], aantalspelers, troefkleur, output);
-      opgegooid[slag][aantalspelers + 3] = geefroem(opgegooid[slag], troefkleur, output);
-
-      if (slag < aantalslagen - 1)
-        opgegooid[slag + 1][aantalspelers] = komtuit;
-
-      // 10 punten extra voor de laatste slag
-      if (slag == aantalslagen - 1)
-        opgegooid[slag][aantalspelers + 2] = opgegooid[slag][aantalspelers + 2] + 10;
-
-      printkaarten(spelerskaarten);
-      printspel(opgegooid);
-
-      // Schrijf resultaten naar de bestanden...
-      string punten = naarstring(opgegooid[slag][aantalspelers + 2]);
-
-      string roem = naarstring(opgegooid[slag][aantalspelers + 3]);
-      string appendstr = "Slag gewonnen door speler " + naarstring(komtuit) + " met " + punten + " punten en " + roem + " roem.";
-
-      for (int i = 0; i < aantalspelers; i++)
-        appendbestand(i, appendstr, 0);
-
-      // En klaarmaken voor de volgende slag
-      huidigespeler = komtuit;
-      slag++;
-    }
-    
-    string resutlaat = "";
-    if (totaalwinnaar(opgegooid, false) == 0)
-      resutlaat = "Team 0 en 2 hebben gewonnen met " + naarstring(opgegooid[aantalslagen][0]) + " punten, inclusief roem.\n";
-    else
-      resutlaat = "Team 1 en 3 hebben gewonnen met " + naarstring(opgegooid[aantalslagen][1]) + " punten, inclusief roem.\n";
-      
-    for (int i = 0; i < aantalspelers; i++)
-      appendbestand(i, resutlaat, 30);
-
-    char toets = 'p';
-    while (toets == 'p')
-      cin >> toets;
-  }
-
-  return 0;
 }
 
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
