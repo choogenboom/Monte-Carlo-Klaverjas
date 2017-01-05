@@ -1,4 +1,5 @@
 #include "speelpas.h"
+#include "competitie.h"
 
 // Speelt op basis van 1000 random potjes met deze hand
 bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit, int troefkleur) {
@@ -147,20 +148,24 @@ int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers
 
     if (spelers[maghetzeggen] == 0) {
       // Voor het overzicht worden de kaarten van mensen gesorteerd
-      insertionsort(spelerskaarten[maghetzeggen], aantalkaarten);
       cout << maghetzeggen << ": " << endl;
 
       if (competitie) {
-        stringstream ss;
-        ss << "Je kaarten:" << endl;
-        
-        for (int j = 0; j < aantalkaarten; j++)
-          ss << Kaarten(spelerskaarten[maghetzeggen][j]);
+        for (int i = 0; i < aantalspelers; i++) {
+          insertionsort(spelerskaarten[i], aantalkaarten);
+          stringstream ss;
+          ss << "Je kaarten:" << endl;
+          
+          for (int j = 0; j < aantalkaarten; j++)
+            ss << Kaarten(spelerskaarten[i][j]);
 
-        ss << endl << endl << "Geef aan of je wilt spelen op " << Kleuren(kleur) << ".";
-        // schrijfenters(maghetzeggen, 30);
-
-        appendbestand(maghetzeggen, ss.str(), 30);
+          ss << endl << endl;
+          if (i == maghetzeggen)
+            ss << "Geef aan of je wilt spelen op " << Kleuren(kleur) << "." << endl;
+          else
+            ss << Kleuren(kleur) << "is gedraaid. " << maghetzeggen << " mag het zeggen." << endl;
+          appendbestand(i, ss.str(), 200);
+        }
       }
 
       if (userspeelt(spelerskaarten[maghetzeggen], kleur))

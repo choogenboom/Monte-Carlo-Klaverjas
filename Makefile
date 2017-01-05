@@ -1,6 +1,6 @@
 CC = g++
 RM = rm -f
-OBJS = klaverjas.o montecarlo.o speelpas.o spelers.o
+OBJS = klaverjas.o montecarlo.o competitie.o speelpas.o spelers.o
 DEBUG = -g
 CFLAGS = -Wall -c
 LFLAGS = -Wall
@@ -18,11 +18,14 @@ debug: klaverjas
 klaverjas: $(OBJS)
 	$(CC) $(LFLAGS) $(OBJS) -o klaverjas
 
-klaverjas.o: klaverjas.cc klaverjas.h montecarlo.h speelpas.h
+klaverjas.o: klaverjas.cc klaverjas.h montecarlo.h competitie.h speelpas.h
 	$(CC) $(CFLAGS) klaverjas.cc
 
 montecarlo.o: montecarlo.cc montecarlo.h spelers.h
 	$(CC) $(CFLAGS) montecarlo.cc
+
+competitie.o: competitie.cc competitie.h
+	$(CC) $(CFLAGS) competitie.cc
 
 speelpas.o: speelpas.cc speelpas.h
 	$(CC) $(CFLAGS) speelpas.cc

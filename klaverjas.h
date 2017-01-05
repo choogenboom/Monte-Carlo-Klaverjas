@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <climits>
+#include <limits>
 
 using namespace std;
 
@@ -78,16 +79,9 @@ int geefroem(int kaarten[aantalspelers], int troefkleur, bool output);
 int teamroem(int opgegooid[aantalslagen + 1][aantalkolommen], int speler);
 int waardeerkaarten(int kaarten[], int maxkaart, int troefkleur, bool output);
 int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage);
-void schrijfenters(int speler, int aantalenters);
-bool schrijfbestand(int speler, int opgegooid[aantalslagen + 1][aantalkolommen], int vorigeslag[aantalspelers], 
-                    int kaarten[aantalkaarten], int slag, string message);
-void schrijfbestanden(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-                      int spelerskaarten[aantalspelers][aantalkaarten], int slag, string message);
-bool appendbestand(int speler, string message, int entersvooraf);
 void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten], int slag, int &huidigespeler, 
           const int komtuit, bool output, bool experiment, bool competitite);
-int speelcompetitie(int spelers[aantalspelers], int komtuit);
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
           int komtuit, bool output, bool experiment, bool competitite);
