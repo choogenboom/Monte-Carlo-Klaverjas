@@ -753,8 +753,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
           kopie[k][l] = opgegooid[k][l];
         }
       }
-if (mogelijkekaarten[i] == 11)
-  cout << " ";
+
       delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.2, 1.5);
 
       // Doe de zet in de kopie
