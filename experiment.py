@@ -4,15 +4,15 @@ import random
 from math import *
 from multiprocessing import Pool
 
-takjes = 100
-num = takjes * 4
+boompjes = 100
+num = boompjes * 4
 
 filename = "result.txt"
 
-sp1 = '1'
-sp2 = '2'
-sp3 = '1'
-sp4 = '2'
+sp1 = '3'
+sp2 = '5'
+sp3 = '3'
+sp4 = '5'
 
 results = []
 team1 = []
@@ -63,4 +63,4 @@ som1 = sum(team1)
 som2 = sum(team2)
 
 with open(filename, "a") as f:
-  f.write("\n\n1+3: " + str(som1) + ", 2+4: " + str(som2) + "\n" + "Errors: " + str(errors) + "\n")
+  f.write("\n\n1+3: " + str(som1) + ", 2+4: " + str(som2) + "\n")
