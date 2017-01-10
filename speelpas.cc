@@ -171,7 +171,7 @@ int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers
       if (userspeelt(spelerskaarten[maghetzeggen], kleur))
         speelt = maghetzeggen;
     }
-    else if ((spelers[maghetzeggen] >= 1 && spelers[maghetzeggen] < 4) || spelers[maghetzeggen] == 5) {
+    else if ((spelers[maghetzeggen] >= 1 && spelers[maghetzeggen] < 4) || spelers[maghetzeggen] == 5 || spelers[maghetzeggen] == 6) {
       if (montecarlospeelt(spelerskaarten[maghetzeggen], komtuit, kleur))
         speelt = maghetzeggen;
     }

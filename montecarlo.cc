@@ -858,12 +858,18 @@ int montecarlokansmove_straf(int kaarten[aantalkaarten], int opgegooid[aantalsla
 
         speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, false, false, false);
       }
-
-      punten += kopie[aantalslagen][huidigespeler];
+      int potjepunten = kopie[aantalslagen][huidigespeler];
 
       // Als de huidige zet roem weggeeft aan de tegenpartij geven we strafpunten
-      if (roemnakaart > roemvoorkaart && kopieslagwinnaar != huidigespeler && kopieslagwinnaar != maat(huidigespeler))
-        punten -= (roemnakaart - roemvoorkaart);
+      if (roemnakaart > roemvoorkaart && kopieslagwinnaar != huidigespeler && kopieslagwinnaar != maat(huidigespeler)) {
+        int straf = roemnakaart - roemvoorkaart;
+        if (straf > potjepunten)
+          potjepunten = 0;
+        else
+          potjepunten -= straf;
+      }
+
+      punten += potjepunten;
     }
 
     if (output)
