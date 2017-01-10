@@ -129,13 +129,31 @@ bool appendbestand(int speler, string bericht, int entersvooraf) {
 int speelcompetitie(int spelers[aantalspelers], int komtuit) {
   int handjes = 16;
   int opgegooid[aantalslagen + 1][aantalkolommen];
+  // Per handje: punten voor team 1 en team 2
+  int scoreformulier[handjes][2];
   int spelerskaarten[aantalspelers][aantalkaarten];
   bool output = true;
   int slag;
   int huidigespeler;
   int troefkleur;
 
+  for (int i = 0; i < handjes; i++) {
+    for (int j = 0; j < 2; j++) {
+      scoreformulier[i][j] = 0;
+    }
+  }
+
+  string scorefilename = naarstring(spelers[0]) + naarstring(spelers[1]) + 
+                         naarstring(spelers[2]) + naarstring(spelers[3]) +  ".txt";
+  ofstream scorefile(scorefilename.c_str(), ios::out | ios::app);
+  if (scorefile.is_open()) {
+    scorefile << scorefilename << endl << endl;
+    scorefile.close();
+    scorefile.clear();
+  }
+
   for (int handje = 0; handje < handjes; handje++) {
+
     // Initieer opgegooid
     for (int i = 0; i < aantalslagen + 1; i++)
       for (int j = 0; j < aantalkolommen; j++)
@@ -149,13 +167,13 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
     bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output, true);
     troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
     opgegooid[0][aantalspelers] = komtuit;
+
+    slag = 0;
+    huidigespeler = komtuit;
     for (int i = 0; i < aantalspelers; i++) {
       schrijfbestanden(spelers, opgegooid, spelerskaarten, slag, "");
       schrijfenters(i, 200);
     }
-
-    slag = 0;
-    huidigespeler = komtuit;
     while (slag < aantalslagen) {
       speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, false, true);
 
@@ -192,12 +210,25 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
     }
     
     string resultaat = "";
-    if (totaalwinnaar(opgegooid, false) == 0)
+    if (totaalwinnaar(opgegooid, false) == 0) {
       resultaat = "Team 0 en 2 hebben gewonnen met " + naarstring(opgegooid[aantalslagen][0]) + " punten, inclusief roem.\n" + 
                   "Team 1 en 3 hadden er " + naarstring(opgegooid[aantalslagen][1]);
-    else
+    }
+    else {
       resultaat = "Team 1 en 3 hebben gewonnen met " + naarstring(opgegooid[aantalslagen][1]) + " punten, inclusief roem.\n" + 
                   "Team 0 en 2 hadden er " + naarstring(opgegooid[aantalslagen][0]);
+    }
+
+    scoreformulier[handje][0] = opgegooid[aantalslagen][0];
+    scoreformulier[handje][1] = opgegooid[aantalslagen][1];
+    
+    scorefile.open(scorefilename.c_str(), std::ios_base::app);
+
+    if (scorefile.is_open()) {
+      scorefile << handje << ": " << opgegooid[aantalslagen][0] << " " << opgegooid[aantalslagen][1] << endl;
+      scorefile.close();
+      scorefile.clear();
+    }
 
     for (int i = 0; i < aantalspelers; i++)
       appendbestand(i, resultaat, 200);
@@ -207,5 +238,14 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
   }
 
+  cout << endl << endl << "Boompje voorbij! Scores: " << endl;
+  int totaalteam1 = 0;
+  int totaalteam2 = 0;
+  for (int i = 0; i < handjes; i++) {
+    totaalteam1 += scoreformulier[i][0];
+    totaalteam2 += scoreformulier[i][1];
+    cout << i << ": " << scoreformulier[i][0] << " " << scoreformulier[i][1] << endl;
+  }
+  cout << "---------- +" << endl << totaalteam1 << "  " << totaalteam2 << endl;
   return 0;
 }
