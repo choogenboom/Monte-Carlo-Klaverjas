@@ -468,7 +468,9 @@ void berekenkansverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int s
 
     if (hebbenwel > 1) {
       double kansperspeler = (double)totaalvankleur[i] / hebbenwel;
-      if (speelt == -1 || i != troefkleur) {
+      // Als dit geen troefkleur is, er verplicht gespeeld of degene die speelt geen troeven meer heeft
+      // houden we geen rekening met de multiplier
+      if (speelt == -1 || i != troefkleur || heeftniet[troefkleur][opgegooid[aantalslagen][aantalspelers]]) {
         for (int j = 0; j < aantalspelers - 1; j++) {
           if (kansverdeling[j][i] != 0)
             kansverdeling[j][i] = kansperspeler;
@@ -834,7 +836,7 @@ int montecarlokansmove_straf(int kaarten[aantalkaarten], int opgegooid[aantalsla
           kopie[k][l] = opgegooid[k][l];
         }
       }
-      
+
       int roemvoorkaart = geefroem(kopie[slag], troefkleur, false);
       int roemnakaart = -1;
 
