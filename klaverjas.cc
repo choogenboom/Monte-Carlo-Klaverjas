@@ -914,11 +914,6 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
         if (output)
           cout << "Monte Carlo (probability distribution) played " << Kaarten(waarde) << endl << endl;
       }
-      else if (spelers[huidigespeler] == 6) {
-        waarde = montecarlokansmove_straf(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
-        if (output)
-          cout << "Monte Carlo (probability distribution, met strafpunten) played " << Kaarten(waarde) << endl << endl;
-      }
       else {
         waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
         if (output)
@@ -1034,7 +1029,7 @@ int main(int argc, char* argv[]) {
    * - 4: Semi-random speler
    * - 5: Monte Carlo speler met kansverdeling
    * - 6: Monte Carlo speler met kansverdeling en percentages als score
-   * - 6: Volledig random speler
+   * - 7: Volledig random speler
   */
   int spelers[aantalspelers];
 
