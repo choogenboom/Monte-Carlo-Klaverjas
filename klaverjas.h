@@ -16,7 +16,7 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
-const static int aantalrandompotjes = 5000;
+const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
 const static double maximumkans = 0.98;
 const static float kans = 0.1;

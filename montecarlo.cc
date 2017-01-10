@@ -759,7 +759,6 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
       deleteelement(mogelijkekaarten[i], spelerskaarten[huidigespeler], maxkaart);
-
       if (((huidigespeler + 1) % aantalspelers) != komtuit)
         speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, false, false, false);
       else {
@@ -812,8 +811,6 @@ int montecarlokansmove_straf(int kaarten[aantalkaarten], int opgegooid[aantalsla
   for (int i = 0; i < aantalmogelijkheden; i++) {
     int punten = 0;
     int delingen = 0;
-    int roemvoorkaart = geefroem(kopie[slag], troefkleur, false);
-    int roemnakaart = -1;
     maxkaart = aantalkaarten - slag;
 
     for (int j = 0; j < aantalrandompotjes; j++) {
@@ -837,6 +834,9 @@ int montecarlokansmove_straf(int kaarten[aantalkaarten], int opgegooid[aantalsla
           kopie[k][l] = opgegooid[k][l];
         }
       }
+      
+      int roemvoorkaart = geefroem(kopie[slag], troefkleur, false);
+      int roemnakaart = -1;
 
       delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.2, 1.5);
 

@@ -4,7 +4,7 @@ import random
 from math import *
 from multiprocessing import Pool
 
-boompjes = 500
+boompjes = 100
 num = boompjes * 4
 
 filename = "straftest5656.txt"
