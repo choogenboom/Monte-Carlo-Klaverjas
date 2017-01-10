@@ -4,15 +4,15 @@ import random
 from math import *
 from multiprocessing import Pool
 
-boompjes = 100
+boompjes = 500
 num = boompjes * 4
 
-filename = "result.txt"
+filename = "straftest5656.txt"
 
-sp1 = '3'
-sp2 = '5'
-sp3 = '3'
-sp4 = '5'
+sp1 = '5'
+sp2 = '6'
+sp3 = '5'
+sp4 = '6'
 
 results = []
 team1 = []

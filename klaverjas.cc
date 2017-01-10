@@ -150,10 +150,12 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit,
          << " - 3: Monte Carlo speler met volledig random potjes" << endl
          << " - 4: Semi-random speler" << endl
          << " - 5: Monte Carlo speler met kansverdeling" << endl
-         << " - 6: Volledig random speler" << endl << endl
+         << " - 6: Monte Carlo speler met kansverdeling en percentages als score" << endl << endl
+         << " - 7: Volledig random speler" << endl << endl
          << "Ook kan een bestand ingelezen met -f, bijvoorbeeld: " << endl
          << argv[0] << " -f voorbeeld.kvj" << endl
          << "Met -e wordt de output geminimaliseerd voor experimenten." << endl
+         << "Met -c wordt er output naar bestanden per speler geschreven voor competities." << endl
          << "Als -im wordt opgegeven wordt alleen INT_MAX geoutput en afgesloten." << endl;
     exit(0);
   }
@@ -912,6 +914,11 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
         if (output)
           cout << "Monte Carlo (probability distribution) played " << Kaarten(waarde) << endl << endl;
       }
+      else if (spelers[huidigespeler] == 6) {
+        waarde = montecarlokansmove_straf(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
+        if (output)
+          cout << "Monte Carlo (probability distribution, met strafpunten) played " << Kaarten(waarde) << endl << endl;
+      }
       else {
         waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
         if (output)
@@ -1026,6 +1033,7 @@ int main(int argc, char* argv[]) {
    * - 3: Monte Carlo speler met volledig random potjes, zonder kans
    * - 4: Semi-random speler
    * - 5: Monte Carlo speler met kansverdeling
+   * - 6: Monte Carlo speler met kansverdeling en percentages als score
    * - 6: Volledig random speler
   */
   int spelers[aantalspelers];
