@@ -2,15 +2,16 @@
 #include "competitie.h"
 
 // Speelt op basis van 1000 random potjes met deze hand
-bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit, int troefkleur) {
+bool montecarlospeelt(int kaarten[aantalkaarten], int huidigespeler, int komtuit, int troefkleur, int randompotjes) {
   int niveaurandom = 4;
   int spelers[aantalspelers] = {niveaurandom, niveaurandom, niveaurandom, niveaurandom};
   int opgegooid[aantalslagen + 1][aantalkolommen];
   int spelerskaarten[aantalspelers][aantalkaarten];
   int wij = 0;
   int zij = 0;
+  int totaalrandompotjes[aantalspelers] = {randompotjes, randompotjes, randompotjes, randompotjes};
 
-  for (int k = 0; k < aantalrandompotjes; k++) {
+  for (int k = 0; k < randompotjes; k++) {
     // Initieer een lege opgegooid
     for (int i = 0; i < aantalslagen + 1; i++)
       for (int j = 0; j < aantalkolommen; j++)
@@ -18,20 +19,20 @@ bool montecarlospeelt(int kaarten[aantalkaarten], int komtuit, int troefkleur) {
 
     // Eigen kaarten zetten we in speler 0
     for (int i = 0; i < aantalkaarten; i++)
-      spelerskaarten[0][i] = kaarten[i];
+      spelerskaarten[huidigespeler][i] = kaarten[i];
 
-    opgegooid[aantalslagen][aantalspelers] = 0;
+    opgegooid[aantalslagen][aantalspelers] = huidigespeler;
     opgegooid[aantalslagen][aantalspelers + 1] = troefkleur;
     opgegooid[aantalslagen][aantalspelers + 2] = 0;
+    opgegooid[0][aantalspelers] = komtuit;
     // De rest van de kaarten worden willekeurig verdeeld
-    deelrestkaarten(opgegooid, 0, komtuit, 0, spelerskaarten, false);
-
-    speel(spelers, opgegooid, spelerskaarten, 0, komtuit, komtuit, false, false, false);
-    wij += opgegooid[aantalslagen][0];
-    zij += opgegooid[aantalslagen][1];
+    deelrestkaarten(opgegooid, 0, komtuit, huidigespeler, spelerskaarten, false);
+    speel(spelers, opgegooid, spelerskaarten, 0, komtuit, komtuit, totaalrandompotjes, false, false);
+   
+    wij += opgegooid[aantalslagen][huidigespeler];
+    zij += opgegooid[aantalslagen][(huidigespeler + 1) % aantalspelers];
   }
 
-  // cout << "Punten: " << wij << " op " << Kleuren(troefkleur) << endl;
   return (wij > zij);
 }
 
@@ -140,18 +141,19 @@ bool userspeelt(int kaarten[aantalkaarten], int kleur) {
     return false;
 }
 
-int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers], int kleur, int komtuit, bool competitie) {
+int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers], int kleur, 
+                   int komtuit, int randompotjes[aantalspelers], bool competitie) {
   int speelt = -1;
 
   for (int i = 0; i < aantalspelers; i++) {
     int maghetzeggen = (komtuit + i) % aantalspelers;
 
     if (spelers[maghetzeggen] == 0) {
-      // Voor het overzicht worden de kaarten van mensen gesorteerd
       cout << maghetzeggen << ": " << endl;
 
       if (competitie) {
         for (int i = 0; i < aantalspelers; i++) {
+          // Voor het overzicht worden de kaarten van mensen gesorteerd
           insertionsort(spelerskaarten[i], aantalkaarten);
           stringstream ss;
           ss << "Je kaarten:" << endl;
@@ -172,11 +174,10 @@ int speelpasrondje(int spelerskaarten[aantalspelers][aantalkaarten], int spelers
         speelt = maghetzeggen;
     }
     else if ((spelers[maghetzeggen] >= 1 && spelers[maghetzeggen] < 4) || spelers[maghetzeggen] == 5 || spelers[maghetzeggen] == 6) {
-      if (montecarlospeelt(spelerskaarten[maghetzeggen], komtuit, kleur))
+      if (montecarlospeelt(spelerskaarten[maghetzeggen], maghetzeggen, komtuit, kleur, randompotjes[maghetzeggen]))
         speelt = maghetzeggen;
     }
     else {
-      // if (troefspeelt(spelerskaarten[maghetzeggen]))
       if (puntenspeelt(spelerskaarten[maghetzeggen], kleur))
         speelt = maghetzeggen;
     }

@@ -132,7 +132,7 @@ ostream& operator<<(ostream& os, const Kaarten kaart) {
 }
 
 void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit, 
-               bool &experiment, bool &competitite, bool &file, string &filename, int &seed) {
+               bool &experiment, bool &competitie, bool &file, string &filename, int &seed, int randompotjes[aantalspelers]) {
   if (argc == aantalspelers + 1) {
     for (int i = 0; i < aantalspelers; i++) {
       spelers[i] = atoi(argv[i + 1]);
@@ -163,6 +163,20 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit,
     file = true;
     filename = argv[2];
   }
+  else if (argv[1] == string("-en") && argc == 12) {
+    // Structuur: ./klaverjas -en 5 2 5 2 seed komtuit 1000 0 1000 0
+    experiment = true;
+    seed = atoi(argv[6]);
+    komtuit = atoi(argv[7]);
+    randompotjes[0] = atoi(argv[8]);
+    randompotjes[1] = atoi(argv[9]);
+    randompotjes[2] = atoi(argv[10]);
+    randompotjes[3] = atoi(argv[11]);
+
+    for (int i = 0; i < aantalspelers; i++) {
+      spelers[i] = atoi(argv[i + 2]);
+    }
+  }
   else if (argv[1] == string("-e")) {
     if (argc >= aantalspelers + 3) {
       experiment = true;
@@ -184,7 +198,7 @@ void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit,
   }
   else if (argv[1] == string("-c")) {
     // Competitie
-    competitite = true;
+    competitie = true;
 
     if (argc == 7) {
       // laatste arg is komtuit
@@ -872,11 +886,11 @@ int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage
 
 void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
   int spelerskaarten[aantalspelers][aantalkaarten], int slag, int &huidigespeler, 
-  int komtuit, bool output, bool experiment, bool competitite) {
+  int komtuit, int randompotjes[aantalspelers], bool output, bool competitie) {
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
 
   for (int i = 0; i < aantalspelers; i++) {
-    if (competitite)
+    if (competitie)
       schrijfbestanden(spelers, opgegooid, spelerskaarten, slag, "");
 
     // Als we halverwege de slag invallen kan een speler al aan de beurt zijn geweest
@@ -890,19 +904,25 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
           waarde = usermove(spelerskaarten[huidigespeler], slag);
       }
       else if (spelers[huidigespeler] == 1) {
-        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, true, kans, experiment);
-        if (output)
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, 
+                                huidigespeler, randompotjes[huidigespeler], 4, output, true, kans);
+        if (output) {
           cout << "Monte Carlo played " << Kaarten(waarde) << endl << endl;
+        }
       }
       else if (spelers[huidigespeler] == 2) {
-        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output, false, 0, experiment);
-        if (output)
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, 
+                                huidigespeler, randompotjes[huidigespeler], 4, output, false, 0);
+        if (output) {
           cout << "Monte Carlo (deterministic) played " << Kaarten(waarde) << endl << endl;
+        }
       }
       else if (spelers[huidigespeler] == 3) {
-        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 100, output, false, 0, experiment);
-        if (output)
+        waarde = montecarlomove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, 
+                                huidigespeler, randompotjes[huidigespeler], 100, output, false, 0);
+        if (output) {
           cout << "Monte Carlo (fully random) played " << Kaarten(waarde) << endl << endl;
+        }
       }
       else if (spelers[huidigespeler] == 4) {
         waarde = semiramdommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
@@ -910,9 +930,11 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
           cout << "Semirandom played " << Kaarten(waarde) << endl << endl;
       }
       else if (spelers[huidigespeler] == 5) {
-        waarde = montecarlokansmove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, huidigespeler, 4, output);
-        if (output)
+        waarde = montecarlokansmove(spelerskaarten[huidigespeler], opgegooid, slag, komtuit, 
+                                    huidigespeler, randompotjes[huidigespeler], 4, output);
+        if (output) {
           cout << "Monte Carlo (probability distribution) played " << Kaarten(waarde) << endl << endl;
+        }
       }
       else {
         waarde = randommove(spelerskaarten[huidigespeler], opgegooid[slag], slag, komtuit, huidigespeler, troefkleur, output);
@@ -928,12 +950,12 @@ void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aanta
 
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
-          int komtuit, bool output, bool experiment, bool competitite) {
+          int komtuit, int randompotjes[aantalspelers], bool output, bool competitie) {
   
   int troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
   
   while (slag < aantalslagen) {
-    speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, experiment, competitite);
+    speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, randompotjes, output, competitie);
 
     if (output)
       cout << winnaar(opgegooid[slag], komtuit, troefkleur) << " wins the trick" << endl;
@@ -976,7 +998,8 @@ int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolo
 }
 
 void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers],
-                 int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, bool output, bool competitite) {
+                 int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, 
+                 int randompotjes[aantalspelers], bool output, bool competitie) {
   int speelt = -1;
   int i = 0;
   int troefkleur = rand() % 4;
@@ -991,7 +1014,7 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
         nieuwekleur = rand() % 4;
 
       troefkleur = nieuwekleur;
-      speelt = speelpasrondje(spelerskaarten, spelers, troefkleur, komtuit, competitite);
+      speelt = speelpasrondje(spelerskaarten, spelers, troefkleur, komtuit, randompotjes, competitie);
     }
     else {
       if (output)
@@ -1036,18 +1059,19 @@ int main(int argc, char* argv[]) {
   int spelerskaarten[aantalspelers][aantalkaarten];
 
   int komtuit = 0;
-  // Deze variabelen zijn alleen voor als er gegevens van een bestand worden ingelezen
+
   bool output = true;
   bool file = false;
   bool experiment = false;
-  bool competitite = false;
+  bool competitie = false;
   int troef;
   int slag = 0;
   int huidigespeler = 0;
   int seed = time(NULL);
+  int randompotjes[aantalspelers] = {1000, 1000, 1000, 1000};
   string filename = "";
 
-  parseargv(argc, argv, spelers, komtuit, experiment, competitite, file, filename, seed);
+  parseargv(argc, argv, spelers, komtuit, experiment, competitie, file, filename, seed, randompotjes);
   srand(seed);
 
   opgegooid[0][aantalspelers] = -1;
@@ -1057,10 +1081,17 @@ int main(int argc, char* argv[]) {
       opgegooid[i][j] = -1;
 
   if (!file) {
-    if (experiment)
+    if (experiment) {
       output = false;
+      for (int i = 0; i < aantalspelers; i++) {
+        if (((spelers[i] > 0 && spelers[i] < 4) || spelers[i] == 5) && randompotjes[i] == -1) {
+          cout << "Speler " << i << " op 1000 random potjes gezet." << endl;
+          randompotjes[i] = 1000;
+        }
+      }
+    }
 
-    if (competitite) {
+    if (competitie) {
       speelcompetitie(spelers, komtuit);
       exit(0);
     }
@@ -1073,7 +1104,7 @@ int main(int argc, char* argv[]) {
       printkaarten(spelerskaarten);
 
     huidigespeler = opgegooid[slag][aantalspelers];
-    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output, false);
+    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, randompotjes, output, false);
   }
   else {
     if (!leesbestand(filename, spelers, spelerskaarten, troef, opgegooid, slag, komtuit))
@@ -1090,7 +1121,7 @@ int main(int argc, char* argv[]) {
     if (troef != -1)
       opgegooid[aantalslagen][aantalspelers + 1] = troef;
     else
-      bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output, false);
+      bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, randompotjes, output, false);
 
     huidigespeler = opgegooid[slag][aantalspelers];
     komtuit = opgegooid[slag][aantalspelers];
@@ -1098,7 +1129,7 @@ int main(int argc, char* argv[]) {
     printspel(opgegooid);
   }
 
-  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, experiment, false);
+  speel(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, randompotjes, output, false);
 
   if (!experiment)
     printspel(opgegooid);

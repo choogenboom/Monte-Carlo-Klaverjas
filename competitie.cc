@@ -136,6 +136,7 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
   int slag;
   int huidigespeler;
   int troefkleur;
+  int randompotjes[aantalspelers] = {aantalrandompotjes, aantalrandompotjes, aantalrandompotjes, aantalrandompotjes};
 
   for (int i = 0; i < handjes; i++) {
     for (int j = 0; j < 2; j++) {
@@ -153,7 +154,6 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
   }
 
   for (int handje = 0; handje < handjes; handje++) {
-
     // Initieer opgegooid
     for (int i = 0; i < aantalslagen + 1; i++)
       for (int j = 0; j < aantalkolommen; j++)
@@ -163,8 +163,10 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
       for (int j = 0; j < aantalkaarten; j++)
         spelerskaarten[i][j] = -1;
 
+    komtuit = handje % aantalspelers;
     deelkaarten(spelerskaarten);
-    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, output, true);
+    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, randompotjes, output, false);
+
     troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
     opgegooid[0][aantalspelers] = komtuit;
 
@@ -175,7 +177,7 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
       schrijfenters(i, 200);
     }
     while (slag < aantalslagen) {
-      speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, output, false, true);
+      speelslag(spelers, opgegooid, spelerskaarten, slag, huidigespeler, komtuit, randompotjes, output, true);
 
       komtuit = winnaar(opgegooid[slag], komtuit, troefkleur);
       opgegooid[slag][aantalspelers + 1] = komtuit;

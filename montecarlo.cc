@@ -710,7 +710,7 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
 }
 
 int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                       int slag, int komtuit, int huidigespeler, int niveaurandom, bool output) {
+                       int slag, int komtuit, int huidigespeler, int randompotjes, int niveaurandom, bool output) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
@@ -722,6 +722,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
   int roemvoorkaart;
   int potjepunten;
   int kopieslagwinnaar;
+  int totaalrandompotjes[aantalspelers] = {randompotjes, randompotjes, randompotjes, randompotjes};
 
   geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, troefkleur, mogelijkekaarten, aantalmogelijkheden);
 
@@ -738,7 +739,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
     int delingen = 0;
     maxkaart = aantalkaarten - slag;
 
-    for (int j = 0; j < aantalrandompotjes; j++) {
+    for (int j = 0; j < randompotjes; j++) {
       // Eerst maken we een kopie van de kaarten, leeg voor de andere spelers
       for (int k = 0; k < aantalspelers; k++) {
         if (k == huidigespeler) {
@@ -762,7 +763,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
       roemvoorkaart = geefroem(kopie[slag], troefkleur, false);
       roemnakaart = -1;
 
-      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, 1.2, 1.5);
+      delingen += deelkansverdeling(kopie, slag, komtuit, huidigespeler, spelerskaarten, M1, M2);
 
       // Doe de zet in de kopie
       kopie[slag][huidigespeler] = mogelijkekaarten[i];
@@ -772,16 +773,16 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
       kopieslagwinnaar = winnaar(kopie[slag], komtuit, troefkleur);
       
       if (((huidigespeler + 1) % aantalspelers) != komtuit)
-        speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, false, false, false);
+        speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, totaalrandompotjes, false, false);
       else {
         kopie[slag + 1][aantalspelers] = kopieslagwinnaar;
         kopie[slag][aantalspelers + 1] = kopieslagwinnaar;
         kopie[slag][aantalspelers + 2] = waardeerkaarten(kopie[slag], aantalspelers, troefkleur, false);
         kopie[slag][aantalspelers + 3] = geefroem(kopie[slag], troefkleur, false);
 
-        speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, false, false, false);
+        speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, totaalrandompotjes, false, false);
       }
-      
+
       potjepunten = kopie[aantalslagen][huidigespeler];
 
       // Als de huidige zet roem weggeeft aan de tegenpartij geven we strafpunten
@@ -798,7 +799,7 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
 
     if (output)
       cout << "Punten voor " << Kaarten(mogelijkekaarten[i]) << " is " << punten
-           << ", in gemiddeld " << delingen / aantalrandompotjes << " delingen." << endl;
+           << ", in gemiddeld " << delingen / randompotjes << " delingen." << endl;
 
     if (punten > beste[1]) {
       beste[0] = i;
@@ -811,7 +812,8 @@ int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 
 }
 
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, float kans, bool experiment) {
+                   int slag, int komtuit, int huidigespeler, int randompotjes, int niveaurandom, 
+                   bool output, bool metkans, float kans) {
   int mogelijkekaarten[aantalkaarten];
   int aantalmogelijkheden = 0;
   int maxkaart = aantalkaarten - slag;
@@ -823,6 +825,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
   int roemvoorkaart;
   int potjepunten;
   int kopieslagwinnaar;
+  int totaalrandompotjes[aantalspelers] = {randompotjes, randompotjes, randompotjes, randompotjes};
 
   geefmogelijkheden(opgegooid[slag], maxkaart, komtuit, huidigespeler, kaarten, troefkleur, mogelijkekaarten, aantalmogelijkheden);
 
@@ -844,7 +847,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
     int delingen = 0;
     maxkaart = aantalkaarten - slag;
 
-    for (int j = 0; j < aantalrandompotjes; j++) {
+    for (int j = 0; j < randompotjes; j++) {
       // Eerst maken we een kopie van de kaarten, leeg voor de andere spelers
       for (int k = 0; k < aantalspelers; k++) {
         if (k == huidigespeler) {
@@ -883,14 +886,14 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
       kopieslagwinnaar = winnaar(kopie[slag], komtuit, troefkleur);
 
       if (((huidigespeler + 1) % aantalspelers) != komtuit)
-        speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, false, false, false);
+        speel(spelers, kopie, spelerskaarten, slag, (huidigespeler + 1) % aantalspelers, komtuit, totaalrandompotjes, false, false);
       else {
         kopie[slag + 1][aantalspelers] = kopieslagwinnaar;
         kopie[slag][aantalspelers + 1] = kopieslagwinnaar;
         kopie[slag][aantalspelers + 2] = waardeerkaarten(kopie[slag], aantalspelers, troefkleur, false);
         kopie[slag][aantalspelers + 3] = geefroem(kopie[slag], troefkleur, false);
 
-        speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, false, false, false);
+        speel(spelers, kopie, spelerskaarten, slag + 1, kopieslagwinnaar, kopieslagwinnaar, totaalrandompotjes, false, false);
       }
 
       potjepunten = kopie[aantalslagen][huidigespeler];
@@ -907,7 +910,7 @@ int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][a
 
     if (output)
       cout << Kaarten(mogelijkekaarten[i]) << " has " << punten
-           << " points, average of " << delingen / aantalrandompotjes << " reshufflings." << endl;
+           << " points, average of " << delingen / randompotjes << " reshufflings." << endl;
 
     if (punten > beste[1]) {
       beste[0] = i;

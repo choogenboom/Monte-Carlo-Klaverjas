@@ -3,6 +3,8 @@
 #ifndef __montecarlo_h__
 #define __montecarlo_h__
 
+const double M1 = 1.2;
+const double M2 = 1.2;
 
 int deelrestkaarten(int opgegooid[aantalslagen + 1][aantalkolommen], int slag, int komtuit, int huidigespeler,
                     int spelerskaarten[aantalspelers][aantalkaarten], bool metkans);
@@ -18,10 +20,11 @@ void berekentroefverdeling(int opgegooid[aantalslagen + 1][aantalkolommen], int 
                            double troefverdeling[aantalspelers - 1][aantalkaarten], int huidigespeler,
                            double kansverdeling[aantalspelers - 1][4], double multiplier, int totaaltroeven);
 int montecarlokansmove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                       int slag, int komtuit, int huidigespeler, int niveaurandom, bool output);
+                       int slag, int komtuit, int huidigespeler, int randompotjes, int niveaurandom, bool output);
 int montecarlomove(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                   int slag, int komtuit, int huidigespeler, int niveaurandom, bool output, bool metkans, float kans, bool experiment);
-int montecarlokansmove_straf(int kaarten[aantalkaarten], int opgegooid[aantalslagen + 1][aantalkolommen],
-                       int slag, int komtuit, int huidigespeler, int niveaurandom, bool output);
-
+                   int slag, int komtuit, int huidigespeler, int randompotjes, int niveaurandom, 
+                   bool output, bool metkans, float kans);
 #endif
+
+
+             

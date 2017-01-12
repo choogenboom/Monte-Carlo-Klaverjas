@@ -16,7 +16,6 @@ using namespace std;
 const static int aantalspelers = 4;
 const static int aantalslagen = 8;
 const static int aantalkaarten = 8;
-const static int aantalrandompotjes = 1000;
 const static int maximumdelingen = 1000;
 const static double maximumkans = 0.98;
 const static float kans = 0.1;
@@ -45,7 +44,7 @@ ostream& operator<<(ostream& os, const Kaarten kaart);
 ostream& operator<<(ostream& os, const Kleuren kleur);
 
 void parseargv(int argc, char* argv[], int spelers[aantalspelers], int &komtuit, 
-               bool &experiment, bool &competitite, bool &file, string &filename, int &seed);
+               bool &experiment, bool &competitite, bool &file, string &filename, int &seed, int randompotjes[aantalspelers]);
 bool leesbestand(string filename, int spelers[aantalspelers], int spelerskaarten[aantalspelers][aantalkaarten], 
                  int &troef, int opgegooid[aantalspelers + 1][aantalkolommen], int &slag, int &komtuit);
 string naarstring(int input);
@@ -80,12 +79,13 @@ int teamroem(int opgegooid[aantalslagen + 1][aantalkolommen], int speler);
 int waardeerkaarten(int kaarten[], int maxkaart, int troefkleur, bool output);
 int totaalwinnaar(int kaarten[aantalslagen + 1][aantalkolommen], bool percentage);
 void speelslag(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
-          int spelerskaarten[aantalspelers][aantalkaarten], int slag, int &huidigespeler, 
-          const int komtuit, bool output, bool experiment, bool competitite);
+               int spelerskaarten[aantalspelers][aantalkaarten], int slag, int &huidigespeler, 
+               int komtuit, int randompotjes[aantalspelers], bool output, bool competitite);
 int speel(int spelers[aantalspelers], int opgegooid[aantalslagen + 1][aantalkolommen],
           int spelerskaarten[aantalspelers][aantalkaarten], int slag, int huidigespeler, 
-          int komtuit, bool output, bool experiment, bool competitite);
+          int komtuit, int randompotjes[aantalspelers], bool output, bool competitite);
 void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[aantalspelers],
-                 int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, bool output, bool competitite);
+                 int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, 
+                 int randompotjes[aantalspelers], bool output, bool competitite);
 
 #endif

@@ -4,15 +4,20 @@ import random
 from math import *
 from multiprocessing import Pool
 
-boompjes = 100
+M1 = 1.2
+M2 = 1.2
+
+boompjes = 200
 num = boompjes * 4
 
-filename = "straftest5656.txt"
+filename = str(M1) + "|" + str(M2) + ".txt"
+with open(filename, "a") as f:
+  f.write("M1=" + str(M1) + ", M2=" + str(M2))
 
 sp1 = '5'
-sp2 = '6'
+sp2 = '2'
 sp3 = '5'
-sp4 = '6'
+sp4 = '2'
 
 results = []
 team1 = []
@@ -37,8 +42,8 @@ def run(komtuit):
 
     result = [score1, score2]
 
-    with open(filename, "a") as f:
-      f.write(str(komtuit) + " - 1: " + str(score1) + ", 2: " + str(score2) + "\n")
+    # with open(filename, "a") as f:
+    #   f.write(str(komtuit) + " - 1: " + str(score1) + ", 2: " + str(score2) + "\n")
     
     # print(str(komtuit) + " - 1: " + str(score1) + ", 2: " + str(score2))
     return result
