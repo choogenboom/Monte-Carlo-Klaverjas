@@ -165,7 +165,7 @@ int speelcompetitie(int spelers[aantalspelers], int komtuit) {
 
     komtuit = handje % aantalspelers;
     deelkaarten(spelerskaarten);
-    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, randompotjes, output, false);
+    bepaaltroef(spelerskaarten, spelers, opgegooid, komtuit, randompotjes, output, true);
 
     troefkleur = opgegooid[aantalslagen][aantalspelers + 1];
     opgegooid[0][aantalspelers] = komtuit;
