@@ -97,14 +97,13 @@ bool troefspeelt(int kaarten[aantalkaarten], int troefkleur) {
     return true;
   else if (boer) {
     // Alleen de boer, niet de nel
-    if (troeven > 32)
+    if (troeven > 2)
       return true;
     else {
       // Boer + 1 extra troef of alleen boer
       if (azen >= 2)
         return true;
     }
-    // B A . .?
   }
   else if (nel) {
     // Alleen de nel, niet de boer
