@@ -88,4 +88,5 @@ void bepaaltroef(int spelerskaarten[aantalspelers][aantalkaarten], int spelers[a
                  int opgegooid[aantalslagen + 1][aantalkolommen], int komtuit, 
                  int randompotjes[aantalspelers], bool output, bool competitite);
 
+
 #endif
